@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 import nl.esciencecenter.esalsa.deploy.parser.TemplateParser;
 import nl.esciencecenter.esalsa.util.Event;
 import nl.esciencecenter.esalsa.util.EventLogger;
+import nl.esciencecenter.esalsa.util.FileDescription;
+import nl.esciencecenter.esalsa.util.FileTransferDescription;
+import nl.esciencecenter.esalsa.util.FileTransferHandle;
+import nl.esciencecenter.esalsa.util.FileTransferService;
 import nl.esciencecenter.esalsa.util.Utils;
 
 public class EnsembleDescription {
@@ -25,6 +29,7 @@ public class EnsembleDescription {
 		"resources.file"
 	};
 	
+	/*
 	public static final String [] inputFiles = new String [] {
 		"input.grid.horizontal", 
 		"input.grid.vertical", 
@@ -37,17 +42,17 @@ public class EnsembleDescription {
 		"input.config.diag.transport", 
 		"input.config.tavg", 
 		"input.config.movie",
-		/*"input.config.history",*/	
 		"input.restart",
 		"input.restart.header",
 	};
-	
+	*/
+
+	/*
 	public static final String [] outputFiles = new String [] {
 		"output.diag", 
 		"output.diag.transport", 
 		"output.tavg", 
 		"output.movie", 
-		/*"output.history",*/ 
 		"output.restart" 
 	};
 	
@@ -58,10 +63,14 @@ public class EnsembleDescription {
 		"site.experimentDir",
 		"site.templateDir"		
 	};
-
+*/
+	
 	public static final String [] generatedFields = new String [] {
 		"generated.log", 
-		"generated.runID"  
+		"generated.runID",
+		"generated.inputDir",
+		"generated.experimentDir",
+		"generated.outputDir",
 	};
 
 	private final String name;
@@ -344,7 +353,7 @@ public class EnsembleDescription {
 		return false;
 	}
 	
-	private void verifyTemplate(Template t,  FileDescription source) {
+	private void verifyTemplate(ConfigurationTemplate t,  FileDescription source) {
 		
 		info("Verifying template variables:");
 		
@@ -384,7 +393,7 @@ public class EnsembleDescription {
 				error("Failed to access configuration template: " + m.configTemplate, e);
 			}
 		
-			Template t = null;
+			ConfigurationTemplate t = null;
 			
 			try { 		
 				t = new TemplateParser(new File(path)).parse();

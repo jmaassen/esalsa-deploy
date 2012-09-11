@@ -1,4 +1,4 @@
-package nl.esciencecenter.esalsa.deploy;
+package nl.esciencecenter.esalsa.util;
 
 public class FileTransferDescription {
 

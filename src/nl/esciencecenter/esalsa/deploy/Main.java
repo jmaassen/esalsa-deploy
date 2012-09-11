@@ -5,6 +5,7 @@ import java.io.File;
 import nl.esciencecenter.esalsa.deploy.parser.DeployParser;
 import nl.esciencecenter.esalsa.util.Event;
 import nl.esciencecenter.esalsa.util.EventLogger;
+import nl.esciencecenter.esalsa.util.FileTransferService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

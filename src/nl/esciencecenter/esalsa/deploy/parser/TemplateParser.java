@@ -6,15 +6,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-import nl.esciencecenter.esalsa.deploy.Template;
+import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
 
 public class TemplateParser {
 
 	private final File file; 
 	private final 	BufferedReader in;
-	
-	
-	private Template template;
+		
+	private ConfigurationTemplate template;
 	private int lineNumber;
 	
 	public TemplateParser(File file) throws FileNotFoundException { 
@@ -58,7 +57,7 @@ public class TemplateParser {
 	
 
 	
-	private boolean readBlockField(Template.Block b) throws Exception { 
+	private boolean readBlockField(ConfigurationTemplate.Block b) throws Exception { 
 	
 		String line = readLine(); 
 		
@@ -102,16 +101,16 @@ public class TemplateParser {
 			throw new Exception("Parse error at: " + file.getName() + ":" + lineNumber + ": line does not start with &"); 
 		}
 		
-		Template.Block b = template.addBlock(line);
+		ConfigurationTemplate.Block b = template.addBlock(line);
 		
 		while (readBlockField(b));
 					
 		return true;
 	}
 	
-	public Template parse() throws Exception { 
+	public ConfigurationTemplate parse() throws Exception { 
 		
-		template = new Template();
+		template = new ConfigurationTemplate(file.getName());
 		
 		while (readBlock());
 		

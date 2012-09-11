@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import nl.esciencecenter.esalsa.deploy.FileDescription;
-import nl.esciencecenter.esalsa.deploy.FileTransferDescription;
 import nl.esciencecenter.esalsa.deploy.ResourceDescription;
 
 import org.gridlab.gat.GAT;
@@ -33,7 +31,7 @@ public class Utils {
 	
 	private static Logger logger = LoggerFactory.getLogger(Utils.class);
 	
-	private static int tempFileCounter = 0;
+//	private static int tempFileCounter = 0;
 	
 	/**
      * convert a list of Strings to a single comma separated String
@@ -338,11 +336,11 @@ public class Utils {
 		
 		return output;
 	}
-	
+/*	
 	private static synchronized String getTempFileName() {
 		return "tmp." + tempFileCounter++;
 	}
-
+*/
 	public static String [] combine(String [] args1, String [] args2) { 
 		
 		if (args1 == null || args1.length == 0) { 

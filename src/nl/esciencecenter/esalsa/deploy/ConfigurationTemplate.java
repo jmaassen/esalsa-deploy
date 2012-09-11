@@ -1,13 +1,11 @@
 package nl.esciencecenter.esalsa.deploy;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class Template {
+public class ConfigurationTemplate extends MarkableObject {
 
 	public class Field { 
 
@@ -38,16 +36,16 @@ public class Template {
 		}
 	}
 	
-	private LinkedList<Template.Block> blocks = new LinkedList<Template.Block>();
+	private LinkedList<ConfigurationTemplate.Block> blocks = new LinkedList<ConfigurationTemplate.Block>();
 	
 	private HashSet<String> variables = new HashSet<String>();
 	
-	public Template() {
-		// emtpy
+	public ConfigurationTemplate(String ID) {
+		super(ID);
 	}
-
-	public Template.Block addBlock(String name) { 
-		Template.Block b = new Template.Block(name);
+	
+	public ConfigurationTemplate.Block addBlock(String name) { 
+		ConfigurationTemplate.Block b = new ConfigurationTemplate.Block(name);
 		blocks.add(b);
 		return b;
 	}

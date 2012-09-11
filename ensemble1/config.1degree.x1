@@ -13,7 +13,7 @@
   lredirect_stdout = .false.
   log_filename = '${generated.log}'
   luse_pointer_files = .true.
-  pointer_filename = '${worker.experimentDir}/rpointer'
+  pointer_filename = '${generated.experimentDir}/rpointer'
 /
 
 &time_manager_nml
@@ -69,8 +69,8 @@
    diag_transp_freq_opt   = 'nmonth'
    diag_transp_freq       = 1
    diag_transport_file    = '${worker.inputDir}/transport_contents.x1'
-   diag_outfile           = '${worker.outputDir}/pop_diag'
-   diag_transport_outfile = '${worker.outputDir}/pop_transp'
+   diag_outfile           = '${generated.outputDir}/pop_diag'
+   diag_transport_outfile = '${generated.outputDir}/pop_transp'
    diag_all_levels        = .false.
    cfl_all_levels         = .false.
 /
@@ -78,7 +78,7 @@
 &restart_nml
    restart_freq_opt = 'never' 
    restart_freq     = 1
-   restart_outfile  = '${worker.outputDir}/pop_restart'
+   restart_outfile  = '${generated.outputDir}/pop_restart'
    restart_fmt      = 'nc'
    leven_odd_on     = .false. 
    even_odd_freq    = 100000
@@ -92,7 +92,7 @@
    tavg_start     = 1
    tavg_infile    = 'unknown_tavg_infile'
    tavg_fmt_in    = 'nc'
-   tavg_outfile   = '${worker.ouputDir}/pop_tavg}'
+   tavg_outfile   = '${generated.outputDir}/pop_tavg}'
    tavg_fmt_out   = 'nc'
    tavg_contents  = '${worker.inputDir}/tavg_contents}'
 /

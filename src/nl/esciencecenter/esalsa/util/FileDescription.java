@@ -1,4 +1,6 @@
-package nl.esciencecenter.esalsa.deploy;
+package nl.esciencecenter.esalsa.util;
+
+import nl.esciencecenter.esalsa.deploy.ResourceDescription;
 
 public class FileDescription {
 

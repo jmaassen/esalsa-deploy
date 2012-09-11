@@ -11,7 +11,7 @@ gateway.adaptors = SshTrilead
 
 templateDir = /home/jason/esalsa/templates/pop_1d_c_32c
 inputDir = /var/scratch/jason/esalsa/experiments/input
-outputDir = /var/scratch/jason/esalsa/experiments/output/${generated.runID}
+outputDir = /var/scratch/jason/esalsa/experiments/output
 experimentDir = /home/jason/esalsa/experiments
 
 nprocs_clinic = 32

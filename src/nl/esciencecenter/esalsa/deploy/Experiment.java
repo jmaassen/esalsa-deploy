@@ -14,8 +14,12 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.esciencecenter.esalsa.util.BulkFileTransferHandle;
 import nl.esciencecenter.esalsa.util.Event;
 import nl.esciencecenter.esalsa.util.EventLogger;
+import nl.esciencecenter.esalsa.util.FileDescription;
+import nl.esciencecenter.esalsa.util.FileTransferDescription;
+import nl.esciencecenter.esalsa.util.FileTransferService;
 import nl.esciencecenter.esalsa.util.Utils;
 
 public class Experiment {

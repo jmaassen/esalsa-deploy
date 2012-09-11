@@ -2,14 +2,16 @@ package nl.esciencecenter.esalsa.deploy;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 
+import nl.esciencecenter.esalsa.deploy.parser.DeployProperties;
 import nl.esciencecenter.esalsa.util.FileDescription;
 import nl.esciencecenter.esalsa.util.Utils;
 
-public class MachineDescription {
+public class WorkerDescription extends MarkableObject {
 
-	public final String name;
-	
 	public final ResourceDescription host;
 	//public final ResourceDescription scheduler;
 	public final ResourceDescription files;	
@@ -29,8 +31,85 @@ public class MachineDescription {
 	//public final FileDescription configTemplate;
 	
 	private ConfigurationTemplate template;
+
+	private HashMap<String, String> values = new HashMap<String, String>(); 
 	
-	public MachineDescription(String name, 
+	public WorkerDescription(String ID, DeployProperties p) { 
+	
+		super(ID);
+
+		host = loadResourceDescription("job", p);
+		files = loadResourceDescription("files", p);
+
+		if (p.containsKey("gateway")) { 
+			gateway = loadResourceDescription("gateway", p);
+		} else { 
+			gateway = null;
+		}
+
+		inputDir = getProperty(p, "inputDir");
+		outputDir = getProperty(p, "outputDir");
+		experimentDir = getProperty(p, "experimentDir");
+		templateDir = getProperty(p, "templateDir");
+
+		for (Entry<Object, Object> entry : p.entrySet()) { 
+			
+			if (!(entry.getKey() instanceof String && entry.getValue() instanceof String)) { 
+				throw new Exception("Failed to parse worker desciption " + name);
+			} 
+
+			String key = (String) entry.getKey();
+			String value = (String) entry.getValue();
+			
+			values.put("worker." + key, value);
+		}
+	}
+
+	public HashMap<String, String> getMapping() { 
+		return values;
+	}
+	
+	private String getProperty(DeployProperties properties, String key) throws Exception { 
+		
+		String tmp = properties.getProperty(key, null);
+		
+		if (tmp == null) {
+			throw new Exception("Missing or invalid field: " + key);
+		}
+		
+		return tmp;
+	}
+	
+	
+	private ResourceDescription loadResourceDescription(String base, DeployProperties machines) throws Exception { 
+		
+		String URI = machines.getProperty(base + ".uri");
+		
+		if (URI == null) { 
+			throw new Exception("No " + base + ".uri defined!");
+		}
+		
+		String name = machines.getProperty(base + ".user.name", null);
+		String key = machines.getProperty(base + ".user.key", null);
+		String [] adaptors = machines.getStringList(base + ".adaptors", ",", null);
+		
+		return new ResourceDescription(URI, name, key, adaptors);
+	}
+	
+	
+		
+		String basename = base + "." + resource;
+		
+		//int cores = getIntProperty(properties, basename + ".cores"); 
+		int slots = getIntProperty(properties, basename + ".slots");
+		
+		
+		return new MachineDescription(base + "." + resource, /*support,*/ job, gateway, files, /*slots,*/ inputDir, outputDir, experimentDir, templateDir);
+	}
+	
+	
+	
+	public WorkerDescription(String name, 
 			ResourceDescription host, 
 			//ResourceDescription scheduler, 
 			ResourceDescription gateway, 
@@ -103,7 +182,7 @@ public class MachineDescription {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		MachineDescription other = (MachineDescription) obj;
+		WorkerDescription other = (WorkerDescription) obj;
 		if (name == null) {
 			if (other.name != null)
 				return false;

@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 import nl.esciencecenter.esalsa.deploy.EnsembleDescription;
-import nl.esciencecenter.esalsa.deploy.FileDescription;
 import nl.esciencecenter.esalsa.deploy.MachineDescription;
 import nl.esciencecenter.esalsa.deploy.ResourceDescription;
-import nl.esciencecenter.esalsa.deploy.Template;
+import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
+import nl.esciencecenter.esalsa.util.FileDescription;
 
 public class DeployParser extends ConfigurationParser {
 
@@ -94,7 +94,7 @@ public class DeployParser extends ConfigurationParser {
 		String experimentDir = getProperty(properties, basename + ".experimentDir");
 		String templateDir = getProperty(properties, basename + ".templateDir");
 		
-		return new MachineDescription(base + "." + resource, support, job, gateway, files, slots, inputDir, outputDir, experimentDir, templateDir);
+		return new MachineDescription(base + "." + resource, /*support,*/ job, gateway, files, /*slots,*/ inputDir, outputDir, experimentDir, templateDir);
 	}
 
 	private List<MachineDescription> loadMachineDescriptions(String base, List<String> resources, String resourceFile, DeployProperties properties) throws Exception { 
@@ -199,7 +199,7 @@ public class DeployParser extends ConfigurationParser {
 	}
 	
 	
-	private Template loadConfigurationTemplate(String template) throws Exception {
+	private ConfigurationTemplate loadConfigurationTemplate(String template) throws Exception {
 		
 		File tmp = new File(template);
 		
