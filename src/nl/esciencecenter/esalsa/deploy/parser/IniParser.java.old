@@ -1,0 +1,198 @@
+package nl.esciencecenter.esalsa.deploy.parser;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import nl.esciencecenter.esalsa.deploy.EnsembleDescription;
+import nl.esciencecenter.esalsa.deploy.MachineDescription;
+import nl.esciencecenter.esalsa.deploy.ResourceDescription;
+
+import org.ini4j.Ini;
+import org.ini4j.InvalidFileFormatException;
+
+public class IniParser extends ConfigurationParser {
+	
+	public IniParser(File source) { 
+		super(source);
+	}
+		
+	private static void checkSection(Ini ini, String section, String name) throws InvalidFileFormatException { 
+		if (ini == null || !ini.containsKey(section)) { 
+			throw new InvalidFileFormatException(name + " does not contain section " + section);
+		}
+	}
+	
+	private static void checkSections(Ini ini, String name, String ...sections) throws InvalidFileFormatException {
+		for (String s : sections) { 
+			checkSection(ini, s, name);
+		}
+	}
+	
+	private String fetch(Ini.Section ini, String key, String defaultValue) { 
+		if (ini.containsKey(key)) { 
+			return ini.fetch(key);
+		} else { 
+			return defaultValue;
+		}
+	}
+	
+	private String [] fetchAll(Ini.Section ini, String key, String [] defaultValue) { 
+		if (ini.containsKey(key)) { 
+			return ini.fetchAll(key,  String [].class);
+		} else { 
+			return defaultValue;
+		}
+	}
+	
+	private ResourceDescription readResourceDescription(String name, Ini.Section ini) throws InvalidFileFormatException {
+
+		logger.info("Reading ResourceDescription: " + name);
+
+		String URI = fetch(ini, "uri", null);
+		
+		if (URI == null) { 
+			throw new InvalidFileFormatException("ResourcesDescription " + name + " does not contain a URI!");
+		}
+		
+		// These may be null
+		String username = fetch(ini, "username", null);
+		String userkey  = fetch(ini, "userkey", null);
+		String [] adaptors = fetchAll(ini, "adaptors", null);
+
+		return new ResourceDescription(name, URI, username, userkey, adaptors);
+	}
+	
+	private ResourceDescription readResourceDescription(String name, Ini.Section ini, ResourceDescription defaults) {
+
+		logger.info("Reading ResourceDescription with defaults: " + name);
+
+		String URI = fetch(ini, "uri", defaults.URI);
+		String username = fetch(ini, "username", defaults.username);
+		String userkey  = fetch(ini, "userkey", defaults.userkey);
+		String [] adaptors = fetchAll(ini, "adaptors", defaults.adaptors);
+
+		return new ResourceDescription(name, URI, username, userkey, adaptors);
+	}
+	
+	private MachineDescription readMachine(String name, File file) throws InvalidFileFormatException, IOException {
+
+		logger.info("Reading machine description: " + file);
+		
+		Ini ini = new Ini(file);
+
+		checkSections(ini, "MachineDescription", "host", "experiment");
+		
+		ResourceDescription host = readResourceDescription(name + ".host", ini.get("host"));
+		ResourceDescription scheduler = null;
+		ResourceDescription files = null;
+		ResourceDescription gateway = null;
+		
+		if (ini.containsKey("scheduler")) { 
+			scheduler = readResourceDescription(name + ".scheduler", ini.get("scheduler"), host);
+		} else { 
+			scheduler = new ResourceDescription(name + ".scheduler", host);
+		}
+		
+		if (ini.containsKey("files")) { 
+			files = readResourceDescription(name + ".files", ini.get("files"), host);
+		} else { 
+			files = new ResourceDescription(name + ".files", host);
+		}
+		
+		if (ini.containsKey("gateway")) { 
+			gateway = readResourceDescription(name + ".gateway", ini.get("gateway"), null);
+		} 	
+
+		Ini.Section exp = ini.get("experiment");
+		
+		int cores = exp.fetch("cores", Integer.class);
+		int slots = exp.fetch("slots", Integer.class);
+		
+		String executable = exp.fetch("executable");
+		
+		String inputDir = exp.fetch("inputDir");
+		String outputDir = exp.fetch("outputDir");
+		String experimentDir = exp.fetch("experimentDir");
+
+		return new MachineDescription(name, host, scheduler, gateway, files, cores, slots, executable, inputDir, experimentDir, outputDir);
+	}
+	
+	private Map<String,String> readFileSet(String [] names, Ini.Section ini) throws InvalidFileFormatException { 
+
+		String source = ini.fetch("source");
+		
+		if (source == null) { 
+			throw new InvalidFileFormatException("Inputs section does not contain a source!");
+		}
+				
+		Map<String, String> tmp = new HashMap<String, String>();
+		
+		for (String name : names) { 
+			
+			if (!ini.containsKey(name)) { 
+				throw new InvalidFileFormatException("Failed to retrieve file field: " + name);
+			}
+			
+			tmp.put(name, ini.fetch(name));
+		}
+		
+		return tmp;
+	}
+	
+	private EnsembleDescription readEnsemble(File file) throws InvalidFileFormatException, IOException { 
+		
+		logger.info("Reading ensemble configuration: " + file);
+		
+		Ini ini = new Ini(file);
+		
+		Ini.Section experiment = ini.get("ensemble");
+		
+		if (experiment == null) { 
+			throw new InvalidFileFormatException("No ensemble section found!");
+		}
+		
+		String name = experiment.fetch("name");
+		
+		int size = experiment.fetch("size", Integer.class);
+
+		Map<String,String> input = readFileSet(inputFiles, ini.get("inputs"));		
+		Map<String,String> output = readFileSet(outputFiles, ini.get("outputs"));
+		
+		String template = experiment.fetch("templates");
+
+		List<String> res = experiment.getAll("resource");
+	
+		if (res == null) { 
+			throw new InvalidFileFormatException("No resources defined!");
+		}
+	
+		ArrayList<MachineDescription> machines = new ArrayList<MachineDescription>();
+		
+		for (String s : res) { 
+			
+			File m = new File(source + File.separator + s + ".ini");
+			
+			checkFile(m, "Machine description");
+
+			machines.add(readMachine(s, m));
+		}
+		
+		return new EnsembleDescription(name, size, input, output, template, machines);		
+	}
+	
+	@Override
+	public EnsembleDescription parse() throws IOException { 
+
+		checkDirectory(source, "Ensemble");
+		
+		File file = new File(source.getAbsolutePath() + File.separator + "ensemble.ini");
+
+		checkFile(file, "Ensemble");
+		
+		return readEnsemble(file);
+	}
+}

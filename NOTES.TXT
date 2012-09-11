@@ -1,0 +1,135 @@
+Things to consider: 
+
+For each resource we want to be able to specify: 
+
+base uri / scheme / user / key adaptors
+gateway uri / scheme / user / key adaptors
+scheduler uri / scheme / user / key adaptors
+file access uri / scheme / user / key adaptors
+
+Example: 
+
+base uri      (fs0.das4.cs.vu.nl)
+base scheme   (ssh)
+base user     (jason)
+base key      (passwd)
+base adaptors (sshtrilead)
+
+This can easily be done (i.e., using seperate ini file for each resource). 
+
+For the input files we want to specify: 
+
+(scheme, uri, location), user, key, gateway+
+
+Examples: 
+
+ssh://fs0.das4.cs.vu.nl//var/scratch/jason/test user=jmaassen key=noot gateway=ssh://kits.cs.vu.nl user=jason key=aap
+http://www.cs.vu.nl/~jason/config 
+ftp://tofstel.nl/file.txt user=jantje key=aap
+
+Problem is: how do we describe this in a compact way? 
+
+-----
+
+CHECKOUT - bolt genereerd pbs scripts ?
+
+----- 
+
+PRACE gebruik(te) globus voor access
+login kon alleen via hyugens (onderdeel van prace)
+
+vereist dus ssh-> hyugens -> gsissh -> hector
+transfer van hyugnes <-> rest via gridftp
+
+PRACE supports Unicore6 ???
+  Unicore Rich Client (URC) is written in Java
+
+HiLA is an API for accessing Grid resources of different middleware in a consistent manner. 
+It has been implemented for UNICORE versions 5 and 6, and OGSA-BES.
+In the German AeroGrid project [aerogrid], a JavaGAT adaptor has been implemented on top of 
+HiLA, thus enabling the use of UNICORE 5 and UNICORE 6 through GAT and this adaptor.
+
+
+
+
+
+
+
+PRACE has its own shared filesystem with 10G network links ?
+
+    PRACE users have access to special PRACE file systems that are exported to and mounted on other European super computers.
+    $PRACE_HOME, $PRACE_DATA, $PRACE_SCRATCH.
+    The PRACE network is a dedicated 10 Gbps network.
+
+
+huygens
+   
+   IBM pSeries p575
+   108 nodes with dual processor Power6 (4.7 GHz), 16 cores per processor, 128 GB/node (plus few with 256)
+   160 Gbit/s, 5 usec, infiniband 
+   Linux: SLES11 SP1
+
+   3456 cores total, 65 Tflop/s, 
+   
+   storage   - home, 200GB quota, with backup  
+             - /scratch, 8TB quota, without backups, deleted after 14 days  
+             - /archive, 210PB, no quota, for long term storage, tape, so its SLOW!
+
+             - use 'dmget' to 'prestage' file to cache (disk)  
+             - use scp, sftp, rsync or gridftp to "archive.sara.nl" instead of going over NFS
+
+             - do not use /tmp or /usr/tmp but $TMPDIR instead (which goes to /scratch/local/...)
+
+
+hector 
+   Cray XE6
+   2816 nodes with dual processor AMD Opteron (2.3 GHz), 16 cores per processor, 32 GB/node 
+   64 Gbit/s, 1-1.5 usec, Cray Gemini (Torus, connected to HyperTransport)
+
+   90112 cores total, 800 Tflops/s
+  
+   access    - ssh [userID]@login.hector.ac.uk
+   
+   filetrans - scp / gridftp to login11b.hector.ac.uk / bbFTP
+
+   storage   - /home/[project code]/[group code]/[username] with backup - NO ACCESS FROM COMPUTE NODES!
+               /work/[project code]/[group code]/[username] hi perf (lustre) without backup
+
+   scheduler - pbspro (qsub / qstat / qdel)
+
+   limits    - official: 1 tot 2048 nodes (= 64K cores) voor jobs van 20m tot 12h
+             - official: 5 tot 128 nodes (= 4K cores) voor jobs van 20m tot 24h
+
+             - job size must be one of 8, 16, 32, 64, 128, 256, 512, 1024, 2048.
+             - job time must be one of 20m, 1h, 3h, 6h, 12h and 24h*.
+             - * 24h jobs may only use 8, 16, 32, 64, 128 nodes
+
+             - SEPARATE QUEUE FOR EACH! -> 50 different queues!
+
+             - max 4 jobs per queue per user, max 8 jobs overall per user
+
+babel 
+   IBM Bluegene/P 
+   10000 nodes with PowerPC 450 (850 Mhz), 4 cores per processor, 2GB/node
+   40000 cores total, 139 TFlop/s 
+
+40k cores 
+
+   access    - 1) from huygens gsissh to ulam-d.idris.fr:2222, followed by "rlogin babel-d.idris.fr"   
+               2) from huygens ssh to babel-d.idris.fr
+               3) from workstation ssh to babel.idris.fr (requires IP registration + paperwork)
+
+   filetrans -  
+
+   storage   - default 10 GB workdir (no backup)
+ 
+   scheduler - loadleveler (llsubmit, llq, llcancel) - also has queues on frontend for small jobs!
+
+   limits    - development mode: default max 4K cores and max 32K CPU hours without (much) paperwork
+               production mode: prove scalability in development mode first...
+
+
+
+
+
+

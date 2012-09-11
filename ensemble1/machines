@@ -1,0 +1,180 @@
+# Machine description file (Jungle file format)
+
+# Mandatory parameters for resources:
+#
+# KEY                 COMMENT
+#
+# support.uri         Contact URI used when deploying support processes (e.g. smartsockets hub)
+# job.uri             Contact URI used when deploying job
+# file.uri            Contact URI used when accessing files
+# file.adaptors       Comma separated list of JavaGAT file adaptors used to
+#                     copy files to and from this resource(*)
+#
+# Optional parameters: 
+#
+# KEY                 COMMENT
+#
+# user.name           User name used for authentication at resource
+# user.key            User keyfile used for authentication at resource (only when user.name is set)
+#
+# gateway.uri         Contact URI of gateway machine needed to access this resource
+# gateway.name        User name used to authenticate at gateway machine
+# gateway.key         User keyfile used to authenticate at gateway machine
+# gateway.adaptors    Comma separated list of JavaGAT file adaptors used to access gateway machine
+#
+# support.adaptor     JavaGAT adaptor used to deploy support processes (e.g. smartsockets hub)
+# support.system.properties system properties for the support processes (e.g. smartsockets settings)
+#
+# java.path           Path to java executable on this resource
+#                     If unspecified, "java" is used
+#
+# job.adaptor         JavaGAT adaptor used to deploy jobs
+# job.wrapper.script  If specified, the given script is copied to the resource
+#                     and run instead of java
+#
+# latitude            Latitude position of this resource (double)
+# longitude           Longitude position of this resouce (double)
+# color               Color (as a HTML color string) used to represent this resource
+
+
+# Details of resource "DAS4-Astron"
+
+DAS4-Astron.support.uri = ssh://fs5.das4.astron.nl
+DAS4-Astron.support.adaptor = SshTrilead
+# DAS4-Astron.support.system.properties = smartsockets.external.manual=192.87.1.34
+DAS4-Astron.job.uri = sshsge://fs5.das4.astron.nl
+# DAS4-Astron.job.adaptor = 
+DAS4-Astron.file.uri = ssh://fs5.das4.astron.nl
+DAS4-Astron.file.adaptors = SftpTrilead, SshTrilead, Local
+DAS4-Astron.java.path = /usr/lib/jvm/java-openjdk/bin/java
+# DAS4-Astron.scheduler.wrapper.script = 
+# DAS4-Astron.user.name = 
+# DAS4-Astron.user.key = 
+# DAS4-Astron.support.system.properties =
+DAS4-Astron.latitude = 52.81335
+DAS4-Astron.longitude = 6.396
+DAS4-Astron.color = #0000FF
+DAS4-Astron.gateway.uri = ssh://kits.few.vu.nl
+# DAS4-Astron.gateway.name = 
+# DAS4-Astron.gateway.key = 
+DAS4-Astron.gateway.adaptors = SshTrilead
+
+
+# Details of resource "DAS4-Delft"
+
+DAS4-Delft.support.adaptor = SshTrilead
+DAS4-Delft.support.uri = ssh://fs3.das4.tudelft.nl
+# DAS4-Delft.job.adaptor = 
+DAS4-Delft.job.uri = sshsge://fs3.das4.tudelft.nl
+DAS4-Delft.file.uri = ssh://fs3.das4.tudelft.nl
+DAS4-Delft.file.adaptors = SftpTrilead, SshTrilead, Local
+DAS4-Delft.java.path = /usr/lib/jvm/java-openjdk/bin/java
+# DAS4-Delft.job.wrapper.script = 
+# DAS4-Delft.user.name = 
+# DAS4-Delft.user.key = 
+# DAS4-Delft.support.system.properties =
+DAS4-Delft.latitude = 51.9979
+DAS4-Delft.longitude = 4.3742
+DAS4-Delft.color = #8000FF
+DAS4-Delft.gateway.uri = ssh://kits.few.vu.nl
+# DAS4-Delft.gateway.name = 
+# DAS4-Delft.gateway.key = 
+DAS4-Delft.gateway.adaptors = SshTrilead
+
+
+# Details of resource "DAS4-Leiden"
+
+DAS4-Leiden.support.adaptor = SshTrilead
+DAS4-Leiden.support.uri = ssh://fs1.das4.liacs.nl
+# DAS4-Leiden.job.adaptor = 
+DAS4-Leiden.job.uri = sshsge://fs1.das4.liacs.nl
+DAS4-Leiden.file.uri = ssh://fs1.das4.liacs.nl
+DAS4-Leiden.file.adaptors = SftpTrilead, SshTrilead, Local
+DAS4-Leiden.java.path = /usr/lib/jvm/java-openjdk/bin/java
+# DAS4-Leiden.job.wrapper.script = 
+# DAS4-Leiden.user.name = 
+# DAS4-Leiden.user.key = 
+# DAS4-Leiden.support.system.properties =
+DAS4-Leiden.latitude = 52.1686
+DAS4-Leiden.longitude = 4.4598
+DAS4-Leiden.color = #FF00FF
+DAS4-Leiden.gateway.uri = ssh://kits.few.vu.nl
+# DAS4-Leiden.gateway.name = 
+# DAS4-Leiden.gateway.key = 
+DAS4-Leiden.gateway.adaptors = SshTrilead
+
+# Details of resource "DAS4-MultimediaN"
+
+DAS4-MultimediaN.support.adaptor = SshTrilead
+DAS4-MultimediaN.support.uri = ssh://fs4.das4.science.uva.nl
+# DAS4-MultimediaN.job.adaptor = 
+DAS4-MultimediaN.file.uri = ssh://fs4.das4.science.uva.nl
+DAS4-MultimediaN.job.uri = sshsge://fs4.das4.science.uva.nl
+DAS4-MultimediaN.file.adaptors = SftpTrilead, SshTrilead, Local
+DAS4-MultimediaN.java.path = /usr/lib/jvm/java-openjdk/bin/java
+# DAS4-MultimediaN.job.wrapper.script = 
+# DAS4-MultimediaN.user.name = 
+# DAS4-MultimediaN.user.key = 
+# DAS4-MultimediaN.support.system.properties =
+DAS4-MultimediaN.latitude = 52.35505
+DAS4-MultimediaN.longitude = 4.95583
+DAS4-MultimediaN.color = #FF0080
+DAS4-MultimediaN.gateway.uri = ssh://kits.few.vu.nl
+# DAS4-MultimediaN.gateway.name = 
+# DAS4-MultimediaN.gateway.key = 
+DAS4-MultimediaN.gateway.adaptors = SshTrilead
+
+
+# Details of resource "DAS4-UvA"
+
+DAS4-UvA.support.adaptor = SshTrilead
+DAS4-UvA.support.uri = ssh://fs2.das4.science.uva.nl
+# DAS4-UvA.job.adaptor = 
+DAS4-UvA.job.uri = sshsge://fs2.das4.science.uva.nl
+DAS4-UvA.file.uri = ssh://fs2.das4.science.uva.nl
+DAS4-UvA.file.adaptors = SftpTrilead, SshTrilead, Local
+DAS4-UvA.java.path = /usr/lib/jvm/java-openjdk/bin/java
+# DAS4-UvA.job.wrapper.script = 
+# DAS4-UvA.user.name = 
+# DAS4-UvA.user.key = 
+# DAS4-UvA.support.system.properties =
+DAS4-UvA.latitude = 52.35505
+DAS4-UvA.longitude = 4.95583
+DAS4-UvA.color = #FF8080
+DAS4-UvA.uri = ssh://kits.few.vu.nl
+# DAS4-UvA.gateway.name =
+# DAS4-UvA.gateway.key =
+DAS4-UvA.gateway.adaptors = SshTrilead
+
+
+# Details of resource "DAS4-VU"
+
+#DAS4-VU.support.adaptor = 
+DAS4-VU.support.uri = ssh://fs0.das4.cs.vu.nl
+# DAS4-VU.job.adaptor = 
+DAS4-VU.job.uri = sshsge://fs0.das4.cs.vu.nl
+DAS4-VU.file.uri = ssh://fs0.das4.cs.vu.nl
+DAS4-VU.file.adaptors = SftpTrilead, SshTrilead, Local
+DAS4-VU.java.path = /usr/lib/jvm/java-openjdk/bin/java
+# DAS4-VU.job.wrapper.script = 
+# DAS4-VU.user.name = 
+# DAS4-VU.user.key = 
+# DAS4-VU.support.system.properties =
+DAS4-VU.latitude = 52.3328
+DAS4-VU.longitude = 4.8669
+DAS4-VU.color = #FFBF80
+DAS4-VU = ssh://kits.few.vu.nl
+# DAS4-VU.gateway.name =
+# DAS4-VU.gateway.key =
+DAS4-VU.gateway.adaptors = SshTrilead
+
+
+
+
+
+#DAS4-VU.job.options = ssh.gateway.uri=ssh://ceres.cs.vu.nl
+#DAS4-VU.support.options = ssh.gateway.uri=ssh://ceres.cs.vu.nl
+#ceres.support.uri = ssh://ceres.cs.vu.nl
+#ceres.job.uri = ssh://ceres.cs.vu.nl
+#ceres.file.adaptors = SftpTrilead, SshTrilead, Local
+#ceres.java.path = java

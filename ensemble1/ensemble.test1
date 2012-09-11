@@ -1,0 +1,76 @@
+# ---- Description of an experiment ----
+
+# ---- All the ensembles defined in this file ----
+
+ensembles = test1
+
+# ---- Description of the ensemble ----
+
+test1.size = 10
+test1.baseID = esalsa_test
+test1.template = pop_in_template
+test1.resources = DAS4-UvA, DAS4-VU
+test1.resources.file = machines
+
+# ---- Gateway used to access the files ---- 
+
+#test1.gateway.uri=ssh://fluit.few.vu.nl
+# test1.gateway.user.name=
+# test1.gateway.user.key=
+#test1.gateway.adaptors=SshTrilead
+
+# ---- The input files for POP ----
+
+test1.input.grid.horizontal = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/grid/grid.3600x2400.fob.da
+test1.input.grid.topography = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/grid/kmt_pbc.p1_tripole.s2.0-og.20060315.no_caspian_or_black
+test1.input.grid.bottomcells = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/grid/dzbc_pbc.p1_tripole.s2.0-og.20060315.no_caspian_or_black
+test1.input.grid.vertical = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/grid/in_depths.42.dat
+
+test1.input.forcing.ws = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/forcing/ws.o_n_avg.mon
+test1.input.forcing.shf = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/forcing/shf.NY+H+f.mon
+test1.input.forcing.sfwf = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/forcing/sfwf.C+r+g8+f.mon
+
+test1.input.tracers.dye = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/tracers/dye_flux_greenland_8regions.ann
+
+test1.input.restart = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/restart/r.t0.1_42l_greenland.01150501
+test1.input.restart.header = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/restart/r.t0.1_42l_greenland.01150501.hdr
+
+test1.input.config.tavg = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/config/tavg_contents
+test1.input.config.movie = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/config/movie_contents
+# test1.input.config.history = 
+test1.input.config.diag.transport = ssh://fs0.das4.cs.vu.nl//var/scratch/jason/POP/input/config/transport_file_141lines
+
+# ---- The output files for POP ----
+
+test1.output.movie = movie
+test1.output.tavg = tavg
+test1.output.diag = diag
+test1.output.diag.transport = diag.transport
+test1.output.restart = restart
+# test1.output.history =
+
+# ---- Resource specific information for DAS4 VU ---- 
+
+test1.DAS4-VU.slots = 2
+test1.DAS4-VU.inputDir = /var/scratch/jason/experiments/input
+test1.DAS4-VU.outputDir = /var/scratch/jason/experiments/output
+test1.DAS4-VU.experimentDir = /home/jason/experiments
+test1.DAS4-VU.templateDir = /home/jason/experiments/pop_original
+
+# ---- Resource specific information for DAS4 Leiden ---- 
+
+test1.DAS4-Leiden.slots = 1
+test1.DAS4-Leiden.inputDir = /var/scratch/jason/experiments/input
+test1.DAS4-Leiden.outputDir = /var/scratch/jason/experiments/output
+test1.DAS4-Leiden.experimentDir = /home/jason/experiments
+test1.DAS4-Leiden.templateDir = /home/jason/experiments/pop_original
+
+# ---- Resource specific information for DAS4 Leiden ---- 
+
+test1.DAS4-UvA.slots = 1
+test1.DAS4-UvA.inputDir = /var/scratch/jason/experiments/input
+test1.DAS4-UvA.outputDir = /var/scratch/jason/experiments/output
+test1.DAS4-UvA.experimentDir = /home/jason/experiments
+test1.DAS4-UvA.templateDir = /home/jason/experiments/pop_original
+
+# ---- The end ----
