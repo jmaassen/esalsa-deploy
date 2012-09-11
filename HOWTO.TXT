@@ -1,1 +1,3 @@
+To run deployment: 
+
 java -cp ".:./bin:./external/*" -Dgat.adaptor.path=`pwd`/external/adaptors nl.esciencecenter.esalsa.deploy.Main ensemble1/ensemble.test1 output
