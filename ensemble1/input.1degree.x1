@@ -1,0 +1,5 @@
+horiz_grid_file = ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/grid/horiz_grid.x1
+vert_grid_file = ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/grid/vert_grid.x1
+topography_file = ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/grid/topography.x1
+diag_transport_file = ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/config/transport_contents.x1
+tavg_contents = ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/config/tavg_contents.x1

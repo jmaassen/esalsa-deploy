@@ -1,0 +1,16 @@
+# Worker description for a 1 degree, cartesian, 32 core POP on DAS4 VU
+
+job.uri = ssh://fs0.das4.cs.vu.nl
+job.adaptors = SshTrilead
+
+file.uri = ssh://fs0.das4.cs.vu.nl
+file.adaptors = SftpTrilead, SshTrilead, Local
+
+gateway.uri = ssh://saturn.cs.vu.nl
+gateway.adaptors = SshTrilead
+
+templateDir = /home/jason/esalsa/templates/pop_1d_c_32c
+inputDir = /var/scratch/jason/esalsa/experiments/input
+outputDir = /var/scratch/jason/esalsa/experiments/output
+experimentDir = /home/jason/esalsa/experiments
+
