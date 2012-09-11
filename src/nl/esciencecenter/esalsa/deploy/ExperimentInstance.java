@@ -9,6 +9,8 @@ public class ExperimentInstance {
 	private final FileSet input;
 	private final FileSet output;
 	
+	
+	
 	public ExperimentInstance(String ID, WorkerDescription worker, String configuration, FileSet input, FileSet output) {
 		super();
 		
