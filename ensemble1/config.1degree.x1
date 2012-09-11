@@ -1,11 +1,11 @@
 &domain_nml
-  nprocs_clinic = ${config.nprocs_clinic}
-  nprocs_tropic = ${config.nprocs_tropic}
-  clinic_distribution_type = '${config.clinic_distribution_type}'
-  tropic_distribution_type = '${config.tropic_distribution_type}'
+  nprocs_clinic = ${worker.nprocs_clinic}
+  nprocs_tropic = ${worker.nprocs_tropic}
+  clinic_distribution_type = '${worker.clinic_distribution_type}'
+  tropic_distribution_type = '${worker.tropic_distribution_type}'
   ew_boundary_type = 'cyclic'
   ns_boundary_type = 'closed'
-  distribution_file = '${config.distribution_file}'
+  distribution_file = '${worker.distribution_file}'
 /
 
 &io_nml
@@ -13,7 +13,7 @@
   lredirect_stdout = .false.
   log_filename = '${generated.log}'
   luse_pointer_files = .true.
-  pointer_filename = './rpointer'
+  pointer_filename = '${worker.experimentDir}/rpointer'
 /
 
 &time_manager_nml
@@ -41,12 +41,12 @@
 
 &grid_nml
    horiz_grid_opt       = 'file'
-   horiz_grid_file      = '${input.horiz_grid_file}'
+   horiz_grid_file      = '${worker.inputDir}/horiz_grid.x1'
    sfc_layer_opt        = 'varthick'
    vert_grid_opt        = 'file'
-   vert_grid_file       = '${input.vert_grid_file}'
+   vert_grid_file       = '${worker.inputDir}/vert_grid.x1'
    topography_opt       = 'file'
-   topography_file      = '${input.topography_file}'
+   topography_file      = '${worker.inputDir}/topography.x1'
    partial_bottom_cells = .false.
    bottom_cell_file     = 'unknown_bottom_cell'
    region_mask_file     = 'unknown_region_mask'
@@ -68,9 +68,9 @@
    diag_cfl_freq          = 1
    diag_transp_freq_opt   = 'nmonth'
    diag_transp_freq       = 1
-   diag_transport_file    = '${input.diag_transport_file}'
-   diag_outfile           = '${output.diag_outfile}'
-   diag_transport_outfile = '${output.diag_transport_outfile}'
+   diag_transport_file    = '${worker.inputDir}/transport_contents.x1'
+   diag_outfile           = '${worker.outputDir}/pop_diag'
+   diag_transport_outfile = '${worker.outputDir}/pop_transp'
    diag_all_levels        = .false.
    cfl_all_levels         = .false.
 /
@@ -78,7 +78,7 @@
 &restart_nml
    restart_freq_opt = 'never' 
    restart_freq     = 1
-   restart_outfile  = '${output.restart_outfile}'
+   restart_outfile  = '${worker.outputDir}/pop_restart'
    restart_fmt      = 'nc'
    leven_odd_on     = .false. 
    even_odd_freq    = 100000
@@ -92,9 +92,9 @@
    tavg_start     = 1
    tavg_infile    = 'unknown_tavg_infile'
    tavg_fmt_in    = 'nc'
-   tavg_outfile   = '${ouput.tavg_outfile}'
+   tavg_outfile   = '${worker.ouputDir}/pop_tavg}'
    tavg_fmt_out   = 'nc'
-   tavg_contents  = '${input.tavg_contents}'
+   tavg_contents  = '${worker.inputDir}/tavg_contents}'
 /
 
 &history_nml
