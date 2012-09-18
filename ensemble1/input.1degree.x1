@@ -1,3 +1,4 @@
+input.1-degree.x1
 ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/grid/horiz_grid.x1
 ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/grid/vert_grid.x1
 ssh://fs0.das4.cs.vu.nl/var/scratch/jason/POP/input_small/grid/topography.x1

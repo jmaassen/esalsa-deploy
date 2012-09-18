@@ -1,16 +1,18 @@
 package nl.esciencecenter.esalsa.util;
 
+import java.net.URI;
+
 public class FileTransferDescription {
 
-	public final FileDescription from;
-	public final FileDescription to;
+	public final URI from;
+	public final URI to;
 	
-	public FileTransferDescription(FileDescription from, FileDescription to) {
+	public FileTransferDescription(URI from, URI to) {
 		this.from = from;
 		this.to = to;
 	}
 	
 	public String toString() { 
-		return from.file.URI + " -> " + to.file.URI;
+		return from + " -> " + to;
 	}
 }

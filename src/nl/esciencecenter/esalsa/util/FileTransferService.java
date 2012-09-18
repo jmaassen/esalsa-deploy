@@ -1,5 +1,6 @@
 package nl.esciencecenter.esalsa.util;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class FileTransferService {
 	private final LinkedList<FileTransferHandle> pending = new LinkedList<FileTransferHandle>();
 	
 	// File transfer history, used to prevent repeated transfers of the same files. 
-	private final HashMap<FileDescription, FileTransferHandle> history = new HashMap<FileDescription, FileTransferHandle>();
+	private final HashMap<URI, FileTransferHandle> history = new HashMap<URI, FileTransferHandle>();
 	
 	// The file transfer threads
 	private final FileTransferThread [] threads;
@@ -80,7 +81,7 @@ public class FileTransferService {
 				return;
 			}
 
-			Utils.copy(handle.description);
+			Utils.copy(handle.description.from, handle.description.to);
 			handle.done();
 			return;
 	

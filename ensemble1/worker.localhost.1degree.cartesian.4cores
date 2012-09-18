@@ -1,0 +1,18 @@
+# Worker description for a 1 degree, cartesian, 32 core POP on DAS4 VU
+
+ID = localhost.1-degree.cartesian.4-cores
+
+job.uri = ssh://localhost
+
+templateDir = /home/jason/esalsa/templates/pop_1d_c_4c
+inputDir = /home/jason/esalsa/experiments/input
+outputDir = /home/jason/esalsa/experiments/output
+experimentDir = /home/jason/esalsa/experiments
+
+nprocs_clinic = 4
+nprocs_tropic = 4
+clinic_distribution_type = cartesian
+tropic_distribution_type = cartesian
+distribution_file = unknown
+
+

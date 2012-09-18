@@ -1,2 +1,3 @@
-pop_transp.${generated.runID}.*
+output.1-degree.x1
+pop_transp
 

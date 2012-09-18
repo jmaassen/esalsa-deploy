@@ -7,29 +7,30 @@ public class ResourceDescription {
 	public final String userkey;
 	public final String [] adaptors;
 	
-	public ResourceDescription(String URI) {
-		this(URI, null, null, null);
-	}
-	
-	public ResourceDescription(String URI, String username, String userkey, String[] adaptors) {
+	public final ResourceDescription gateway;
+
+	public ResourceDescription(String URI, String username, String userkey, String[] adaptors, ResourceDescription gateway) {
 		this.URI = URI;
 		this.username = username;
 		this.userkey = userkey;
 		this.adaptors = adaptors;
+		this.gateway = gateway;
+	}
+
+	public ResourceDescription(String URI) {
+		this(URI, null, null, null, null);
+	}
+	
+	public ResourceDescription(String URI, String username, String userkey, String[] adaptors) {
+		this(URI, username, userkey, adaptors, null);		
 	}
 
 	public ResourceDescription(ResourceDescription other) {
-		this.URI = other.URI;
-		this.username = other.username;
-		this.userkey = other.userkey;
-		this.adaptors = other.adaptors;
+		this(other.URI, other.username, other.userkey, other.adaptors, other.gateway);
 	}
 	
 	public ResourceDescription(String URI, ResourceDescription other) {
-		this.URI = URI;
-		this.username = other.username;
-		this.userkey = other.userkey;
-		this.adaptors = other.adaptors;
+		this(URI, other.username, other.userkey, other.adaptors, other.gateway);
 	}
 	
 	@Override

@@ -1,6 +1,8 @@
 package nl.esciencecenter.esalsa.deploy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class MarkableMap<V extends MarkableObject> {
 
@@ -53,4 +55,10 @@ public class MarkableMap<V extends MarkableObject> {
 			return temp;
 		}
 	}	
+	
+	public List<String> getKeys() { 
+		ArrayList<String> result = new ArrayList<String>(map.size());
+		result.addAll(map.keySet());		
+		return result;
+	}
 }
