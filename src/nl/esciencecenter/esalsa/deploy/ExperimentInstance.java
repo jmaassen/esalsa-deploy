@@ -273,9 +273,6 @@ public class ExperimentInstance extends MarkableObject {
 		
 		info("Preparing remote directories and files.");
 		
-		
-		
-		
 		// First create the remote directories private to this experiment				
 		try { 
 			if (!Utils.createDir(experimentDir)) { 
