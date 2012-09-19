@@ -10,9 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import nl.esciencecenter.esalsa.deploy.Experiment.State;
 import nl.esciencecenter.esalsa.util.BulkFileTransferHandle;
-import nl.esciencecenter.esalsa.util.EventLogger;
 import nl.esciencecenter.esalsa.util.FileTransferDescription;
 import nl.esciencecenter.esalsa.util.Utils;
 
@@ -134,7 +132,7 @@ public class ExperimentInstance extends MarkableObject {
 		experimentDir = worker.fileServer.resolve(worker.experimentDir + File.separator + ID + File.separator);
 		outputDir = worker.fileServer.resolve(worker.outputDir + File.separator + ID + File.separator);
 		inputDir = worker.fileServer.resolve(worker.inputDir + File.separator);
-		templateDir = worker.fileServer.resolve(worker.inputDir + File.separator);
+		templateDir = worker.fileServer.resolve(worker.templateDir + File.separator);
 
 		startScript = experimentDir.resolve("start.sh");
 		monitorScript = experimentDir.resolve("monitor.sh");
@@ -265,7 +263,7 @@ public class ExperimentInstance extends MarkableObject {
 		}
 		
 		if (log) { 
-			EventLogger.get().log("[EXPERIMENT]", ID, nextState.name(), message);
+			// EventLogger.get().log("[EXPERIMENT]", ID, nextState.name(), message);
 		}
 	}
 	
@@ -299,16 +297,22 @@ public class ExperimentInstance extends MarkableObject {
 		// Required input file transfers. 
 		LinkedList<FileTransferDescription> inputsTransfers = new LinkedList<FileTransferDescription>();
 		
+//System.out.println("**** Adding input files!");		
+		
 		// Add all input files to the file transfer list 
 		try { 	
 			for (URI file : input.getFiles()) {
-				URI target = worker.fileServer.resolve(worker.inputDir + File.separator + Utils.getFileName(file));
+				URI target = inputDir.resolve(Utils.getFileName(file));
 				inputsTransfers.addLast(new FileTransferDescription(file, target));
+
+//				System.out.println("    " + file + " -> " + target);		
 			} 
 		} catch (Exception e) {
 			error("Failed to generate transfer list for input files!", e);
 			return;
 		}
+
+//System.out.println("**** Adding local config!");		
 		
 		// Add the local config file.
 		URI source = null;
@@ -320,9 +324,13 @@ public class ExperimentInstance extends MarkableObject {
 			return;
 		}
 			
-		URI target = worker.fileServer.resolve(worker.experimentDir + File.separator + "pop_in");
+		URI target = experimentDir.resolve("pop_in");
 		inputsTransfers.add(new FileTransferDescription(source, target));
-		
+
+//System.out.println("    " + source + " -> " + target);		
+
+//System.out.println("**** Adding template dir!");		
+				
 		// transfers.add(new FileTransferDescription(md.templateDir, experiment.remoteExperimentDir));
 		
 		// Add the files in the remote experiment template dir.		
@@ -333,6 +341,8 @@ public class ExperimentInstance extends MarkableObject {
 			return;
 		}
 
+//System.out.println("**** Done!");		
+				
 		info("Starting file transfer.");
 
 		// Enqueue our list of file transfers at the file transfer service of our parent;

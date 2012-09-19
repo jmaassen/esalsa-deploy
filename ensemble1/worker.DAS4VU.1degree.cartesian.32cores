@@ -3,13 +3,14 @@
 ID = DAS4.VU.1-degree.cartesian.32-cores
 
 job.uri = ssh://fs0.das4.cs.vu.nl
-job.adaptors = SshTrilead
 
-file.uri = ssh://fs0.das4.cs.vu.nl
-file.adaptors = SftpTrilead, SshTrilead, Local
-
-gateway.uri = ssh://saturn.cs.vu.nl
-gateway.adaptors = SshTrilead
+#job.adaptors = SshTrilead
+#
+#file.uri = ssh://fs0.das4.cs.vu.nl
+#file.adaptors = SftpTrilead, SshTrilead, Local
+#
+#gateway.uri = ssh://saturn.cs.vu.nl
+#gateway.adaptors = SshTrilead
 
 templateDir = /home/jason/esalsa/templates/pop_1d_c_32c
 inputDir = /var/scratch/jason/esalsa/experiments/input

@@ -94,7 +94,7 @@
    tavg_fmt_in    = 'nc'
    tavg_outfile   = '${generated.outputDir}/pop_tavg'
    tavg_fmt_out   = 'nc'
-   tavg_contents  = '${worker.inputDir}/tavg_contents'
+   tavg_contents  = '${worker.inputDir}/tavg_contents.x1'
 /
 
 &history_nml

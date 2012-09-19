@@ -1,7 +1,6 @@
 package nl.esciencecenter.esalsa.deploy;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 
 public class WorkerDescription extends MarkableObject {
@@ -23,7 +22,6 @@ public class WorkerDescription extends MarkableObject {
 	private HashMap<String, String> values;  
 	
 	public WorkerDescription(String ID, 
-			/*ResourceDescription host, ResourceDescription files, ResourceDescription gateway,*/
 			URI jobServer, URI fileServer, 
 			String inputDir, String outputDir, String experimentDir, String templateDir, 
 			HashMap<String, String> values) {
@@ -46,31 +44,13 @@ public class WorkerDescription extends MarkableObject {
 		
 		this.values = values;
 	}
-	
-	/*
-	public URI getTemplateDirURI() throws URISyntaxException { 
-		return new URI(fileServer + templateDir);
-	}
-
-	public URI getInputDirURI() throws URISyntaxException { 
-		return new URI(fileServer + inputDir);
-	}
-	
-	public URI getOutputDirURI() throws URISyntaxException { 
-		return new URI(fileServer + outputDir);
-	}
-	
-	public URI getExperimentDirURI() throws URISyntaxException { 
-		return new URI(fileServer + outputDir);
-	}
-	*/
-	
+		
 	public HashMap<String, String> getMapping() { 
 		return values;
 	}
 	
 	public String toString() { 
-		return "Machine(" + ID + ", host=" + jobServer + ", files=" + fileServer 
+		return "Worker(" + ID + ", host=" + jobServer + ", files=" + fileServer 
 				+ ", inputDir=" + inputDir + ", outputDir=" + outputDir + ", experimentDir=" + experimentDir + ", templateDir=" + templateDir;  
 	}
 }

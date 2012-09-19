@@ -62,7 +62,7 @@ public class ConfigurationTemplate extends MarkableObject {
 
 	private String setVariable(String text, String variableName, Map<String,String> variables) throws Exception { 
 		
-		System.out.println("SET VARIABLE " + text + " -> " + variableName);
+		//System.out.println("SET VARIABLE " + text + " -> " + variableName);
 		
 		String value = variables.get(variableName);
 		

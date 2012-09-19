@@ -1,5 +1,5 @@
-baseID = POP_1degree_DAS4VU
+baseID = POP_1degree_DAS4LU
 configuration = config.1degree.x1
-worker = DAS4.VU.1-degree.cartesian.32-cores
+worker = DAS4.LU.1-degree.cartesian.32-cores
 stageIn = input.1-degree.x1
 stageOut = output.1-degree.x1

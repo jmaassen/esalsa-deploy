@@ -5,8 +5,8 @@ ID = localhost.1-degree.cartesian.4-cores
 job.uri = ssh://localhost
 
 templateDir = /home/jason/esalsa/templates/pop_1d_c_4c
-inputDir = /home/jason/esalsa/experiments/input
-outputDir = /home/jason/esalsa/experiments/output
+inputDir = /home/jason/esalsa/input
+outputDir = /home/jason/esalsa/output
 experimentDir = /home/jason/esalsa/experiments
 
 nprocs_clinic = 4

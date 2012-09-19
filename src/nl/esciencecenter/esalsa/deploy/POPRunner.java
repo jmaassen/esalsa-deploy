@@ -7,12 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
-
-//import org.gridlab.gat.URI;
 
 import nl.esciencecenter.esalsa.deploy.parser.DeployProperties;
 import nl.esciencecenter.esalsa.deploy.parser.TemplateParser;
@@ -149,7 +148,7 @@ public class POPRunner {
 
 	public void finishedExperiment(ExperimentInstance experimentInstance) {
 		try { 
-			removeExperimentDescription(experimentInstance.ID);
+			runningExperiments.remove(experimentInstance.ID);
 		} catch (Exception e) {
 			System.out.println("Failed to remove experiment " + experimentInstance.ID);
 		}
@@ -169,6 +168,8 @@ public class POPRunner {
 
 	public void run() { 
 		
+		boolean mustPrint = true;
+		
 		while (true) { 
 
 			boolean stateChanged = false;
@@ -176,12 +177,12 @@ public class POPRunner {
 			List<String> tmp = listRunningExperiments();
 				
 			if (tmp.size() > 0) { 
-				System.out.println("Running " + tmp.size() + " experiments: ");
+				//System.out.println("Running " + tmp.size() + " experiments: ");
 					
 				for (String ID : tmp) { 
 					try { 
 						ExperimentInstance e = getRunningExperiment(ID);
-						System.out.println(" " + e.ID + " on " + e.worker.ID);
+						//System.out.println(" " + e.ID + " on " + e.worker.ID);
 						boolean change = e.run();
 						stateChanged = stateChanged | change;
 					} catch (Exception e) {
@@ -191,8 +192,15 @@ public class POPRunner {
 					}
 				}
 
-				System.out.println();
-			} 
+				mustPrint = true;
+				
+//				System.out.println();
+			} else { 
+				if (mustPrint) { 
+					System.out.println("POPRunner now idle...");
+					mustPrint = false;
+				}
+			}
 
 			if (!stateChanged) { 
 				sleep(1);
@@ -309,8 +317,34 @@ public class POPRunner {
 		return new FileSet(ID, files);		
 	}
 		
+	private static String format(int number, int pos) { 
+		
+		String tmp = "" + number;
+		
+		while (tmp.length() < pos) { 
+			tmp = "0" + tmp;
+		}
+
+		return tmp;
+	}
+ 	
 	private synchronized static String generateID(String baseID) {
-		return baseID + "." + counter++;
+		
+		Calendar c = Calendar.getInstance();
+		
+		StringBuilder b = new StringBuilder(baseID);
+		b.append(".");
+		b.append(c.get(Calendar.YEAR));
+		b.append(format(c.get(Calendar.MONTH), 2));
+		b.append(format(c.get(Calendar.DAY_OF_MONTH), 2));
+		b.append(".");
+		b.append(format(c.get(Calendar.HOUR_OF_DAY), 2));
+		b.append(format(c.get(Calendar.MINUTE), 2));
+		b.append(format(c.get(Calendar.SECOND), 2));
+		b.append(".");
+		b.append(counter++);
+		
+		return b.toString();
 	}
 	
 	public static void sleep(int seconds) { 
