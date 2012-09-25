@@ -1,13 +1,18 @@
 package nl.esciencecenter.esalsa.deploy;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class ConfigurationTemplate extends MarkableObject {
+public class ConfigurationTemplate extends MarkableObject implements Serializable {
 
-	public class Field { 
+	private static final long serialVersionUID = -7572136097006754510L;
+
+	public class Field implements Serializable { 
+		
+		private static final long serialVersionUID = -2805282476737841430L;
 
 		public final String key;
 		public final String value;
@@ -20,7 +25,9 @@ public class ConfigurationTemplate extends MarkableObject {
 		}
 	}
 	
-	public class Block { 
+	public class Block implements Serializable { 
+
+		private static final long serialVersionUID = -4816608510918107495L;
 
 		public final String name;
 		

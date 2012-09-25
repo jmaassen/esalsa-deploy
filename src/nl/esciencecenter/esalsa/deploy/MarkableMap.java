@@ -26,7 +26,7 @@ public class MarkableMap<V extends MarkableObject> {
 		}
 	}
 	
-	public void remove(String key) throws Exception { 
+	public V remove(String key) throws Exception { 
 	
 		synchronized (lock) {
 			V temp = map.get(key);
@@ -39,7 +39,7 @@ public class MarkableMap<V extends MarkableObject> {
 				throw new Exception(contents + " " + key + " cannot be deleted: it is currently in use!");
 			}
 	
-			map.remove(key);
+			return map.remove(key);
 		}
 	}
 

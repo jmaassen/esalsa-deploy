@@ -1,7 +1,11 @@
 package nl.esciencecenter.esalsa.deploy;
 
-public class MarkableObject {
+import java.io.Serializable;
+
+public class MarkableObject implements Serializable {
 	
+	private static final long serialVersionUID = -1859876463445764959L;
+
 	public final String ID;
 	
 	private boolean inUse = false;

@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 public class ExperimentInstance extends MarkableObject {
 
+	private static final long serialVersionUID = -1880840203028855856L;
+
 	// Global logger 
 	private static final Logger globalLogger = LoggerFactory.getLogger("eSalsa");
 	
@@ -65,7 +67,7 @@ public class ExperimentInstance extends MarkableObject {
 	public final FileSet input;
 	
 	/** The list of output file that must be staged out after the run. */
-	public final FileSet output;
+//	public final FileSet output;
 	
 	// A handle for the file transfers performed at stageIn and stageOut.
 	private BulkFileTransferHandle fileTransfers;
@@ -81,7 +83,8 @@ public class ExperimentInstance extends MarkableObject {
 		STAGE_OUT,
 		STAGE_OUT_COMPLETE, 
 		FINISHED,
-		ERROR;
+		ERROR, 
+		STOPPED_BY_USER;
 	}
 	
 	// Current state
@@ -105,6 +108,12 @@ public class ExperimentInstance extends MarkableObject {
 	// Local copy of the (generated) configuration file.	
 	private final File localConfig;
 	
+	// Flag to stop this experiment when it is running
+	private boolean mustStop = false;
+	
+	// Log describing the progress of the job;
+	private final StringBuilder log = new StringBuilder();
+	
 	public ExperimentInstance(String ID, ExperimentDescription experiment, POPRunner parent) throws Exception {
 		
 		super(ID);
@@ -113,9 +122,9 @@ public class ExperimentInstance extends MarkableObject {
 		this.experiment = experiment;
 		this.parent = parent;
 		
-		worker = parent.getWorker(experiment.worker);
-		input = parent.getInputFileSet(experiment.stageIn);
-		output = parent.getOutputFileSet(experiment.stageOut);
+		worker = parent.getWorkerDescription(experiment.worker);
+		input = parent.getInputFileSet(experiment.inputs);
+//		output = parent.getOutputFileSet(experiment.stageOut);
 		
 		localOutputDir = new File(parent.getTempDir() + File.separator + ID);
 		
@@ -183,12 +192,13 @@ public class ExperimentInstance extends MarkableObject {
 		setState(nextState, message, true);
 	} 
 	
-	private void setState(State nextState, String message, boolean log) {
+	// Needs to be synchronized, as we can receive concurrent requests to read the state/message	
+	private synchronized void setState(State nextState, String message, boolean log) {
 	
 		// This switch contains all legal state transitions in the state machine.
 		switch (state) {
 		case INITIAL:
-			if (nextState == State.ERROR || nextState == State.STAGE_IN) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STAGE_IN) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -196,7 +206,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case STAGE_IN:
-			if (nextState == State.ERROR || nextState == State.STAGE_IN_COMPLETE) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STAGE_IN_COMPLETE) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -204,7 +214,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case STAGE_IN_COMPLETE:
-			if (nextState == State.ERROR || nextState == State.SUBMITTED) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.SUBMITTED) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -212,7 +222,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case SUBMITTED:
-			if (nextState == State.ERROR || nextState == State.RUNNING) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.RUNNING) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -220,7 +230,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case RUNNING:
-			if (nextState == State.ERROR || nextState == State.STOPPED) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STOPPED) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -228,7 +238,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case STOPPED:
-			if (nextState == State.ERROR || nextState == State.STAGE_OUT) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STAGE_OUT) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -236,7 +246,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case STAGE_OUT:
-			if (nextState == State.ERROR || nextState == State.STAGE_OUT_COMPLETE) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STAGE_OUT_COMPLETE) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -244,7 +254,7 @@ public class ExperimentInstance extends MarkableObject {
 			}
 			break;
 		case STAGE_OUT_COMPLETE:
-			if (nextState == State.ERROR || nextState == State.FINISHED) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.FINISHED) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -262,13 +272,13 @@ public class ExperimentInstance extends MarkableObject {
 			throw new Error("Illegal state transition: " + state + " -> " + nextState);
 		}
 		
-		if (log) { 
+		if (log) {
+			this.log.append("Changed state to " + state.name() + ": " + message + "\n");
 			// EventLogger.get().log("[EXPERIMENT]", ID, nextState.name(), message);
 		}
 	}
 	
 	private void stageIn() { 
-		
 		info("Preparing remote directories and files.");
 		
 		// First create the remote directories private to this experiment				
@@ -351,12 +361,23 @@ public class ExperimentInstance extends MarkableObject {
 		setState(State.STAGE_IN, "-");
 	}
 	
+	private void cancelStageIn() { 
+		fileTransfers.cancel();
+	}
+	
 	private void monitorStageIn() { 
+		
+		// FIXME: should interrupt file transfer! 
 		
 		if (!fileTransfers.isDone()) {
 			return;
 		}
-			
+
+		if (mustStop) { 
+			setState(State.STOPPED_BY_USER, "-");
+			return;
+		}
+		
 		info("File transfer completed.");
 		
 		List<Exception> exceptions = fileTransfers.getExceptions();
@@ -471,9 +492,71 @@ public class ExperimentInstance extends MarkableObject {
 			error("Failed to parse output of start script: " + output);
 		}
 	}
+
+	private void stopJob() { 
+
+		info("Stopping remote job.");
+		
+		String tmpName = getTempFileName("stop", null);
+		
+		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
+		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
+		
+		int exit = Utils.runRemoteScript(worker.jobServer, experimentDir.getPath(), 
+				"stop.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + ID + "]");
+		
+		if (exit != 0) { 
+			// Should log to experiment specific log file ?
+			error("Failed to stop experiment " + ID + " (exit code = " + exit + ")");			
+			return;
+		}
+		
+		// Should log to experiment specific log file ?
+		info("Reading output of stop script: ");
+	
+		StringBuffer error = null;
+		StringBuffer output = null;
+
+		try { 
+			error = Utils.readOutput(stderr, null);
+			info("stderr: " + error.toString());
+		} catch (IOException e) {
+			warn("Failed to read stderr of experiment  " + ID, e);
+		}
+		
+		try { 
+			output = Utils.readOutput(stdout, null);
+			info("stdout: " + output.toString());
+		} catch (IOException e) {
+			error("Failed to read stdout of experiment  "+ ID, e);
+			return;
+		}
+
+		// We expect one of the following output here: 
+		//
+		// OK <scheduler specific info>
+		// ERROR <scheduler specific error message>
+		StringTokenizer tok = new StringTokenizer(output.toString());
+		
+		if (!tok.hasMoreTokens()) { 
+			error("Failed to parse output of stop script: " + output);
+			return;
+		}
+		
+		String status = tok.nextToken();
+	
+		if (status.equalsIgnoreCase("OK")) { 
+			info("Remote job stopped succesfully.");			
+		} else if (status.equalsIgnoreCase("ERROR")) { 
+			error("Stop script returned an error: " + output);
+		} else {  
+			error("Failed to parse output of stop script: " + output);
+		}
+	}
+
 	
 	private void monitorJob() { 
-	
+		
 		long time = System.currentTimeMillis();
 		
 		if (time <= (lastMonitorJob + MONITOR_SLEEP*1000)) {
@@ -617,22 +700,51 @@ public class ExperimentInstance extends MarkableObject {
 		parent.finishedExperiment(this);
 	}
 	
+	public synchronized void mustStop() {
+		mustStop = true;
+	}
+	
+	private synchronized boolean getMustStop() {
+		return mustStop;
+	}
+	
 	public boolean run() { 
 		
 		stateChanged = false;
 		
+		boolean stop = getMustStop();
+		
 		switch (state) {
 		case INITIAL:
-			stageIn();			
+			if (stop) { 
+				setState(State.STOPPED_BY_USER, "-");
+			} else { 
+				stageIn();
+			}
+			break;
 		case STAGE_IN:
-			monitorStageIn();
+			if (stop) {
+				cancelStageIn();
+				setState(State.STOPPED_BY_USER, "-");
+			} else { 
+				monitorStageIn();
+			}
 			break;
 		case STAGE_IN_COMPLETE:
-			submit();
+			if (stop) { 
+				setState(State.STOPPED_BY_USER, "-");
+			} else { 
+				submit();
+			}
 			break;
 		case SUBMITTED:
-		case RUNNING:
-			monitorJob();
+		case RUNNING:			
+			if (stop) {
+				stopJob();
+				setState(State.STOPPED_BY_USER, "-");
+			} else { 
+				monitorJob();
+			}
 			break;
 		case STOPPED:
 			stageOut();
@@ -644,6 +756,7 @@ public class ExperimentInstance extends MarkableObject {
 			cleanup();
 			break;			
 		case FINISHED:
+		case STOPPED_BY_USER:
 		case ERROR:
 			finish();
 			break;
@@ -651,5 +764,8 @@ public class ExperimentInstance extends MarkableObject {
 		
 		return stateChanged;
 	}
-		
+
+	public synchronized ExperimentInfo getInfo() {
+		return new ExperimentInfo(ID, experiment.ID, state.name(), log.toString());
+	}
 }

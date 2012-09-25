@@ -1,23 +1,19 @@
 package nl.esciencecenter.esalsa.deploy;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 
 import nl.esciencecenter.esalsa.deploy.parser.DeployProperties;
-import nl.esciencecenter.esalsa.deploy.parser.TemplateParser;
 import nl.esciencecenter.esalsa.util.FileTransferService;
 
-public class POPRunner {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class POPRunner implements POPRunnerInterface, Runnable {
+
+	private static final int MAX_FILETRANSFER_THREADS = 8;
+	
+	private static Logger globalLogger = LoggerFactory.getLogger("eSalsa");
 	
 	private final Object lock = new Object();
 	
@@ -28,296 +24,48 @@ public class POPRunner {
 	private MarkableMap<WorkerDescription> workers = new MarkableMap<WorkerDescription>(lock, "Worker");
 	
 	private MarkableMap<FileSet> inputs = new MarkableMap<FileSet>(lock, "InputFileSet");
-	private MarkableMap<FileSet> outputs = new MarkableMap<FileSet>(lock, "OutputFileSet");
+//	private MarkableMap<FileSet> outputs = new MarkableMap<FileSet>(lock, "OutputFileSet");
 	
 	private MarkableMap<ExperimentDescription> experimentDescriptions = new MarkableMap<ExperimentDescription>(lock, "Experiment Descriptions");
 
 	private MarkableMap<ExperimentInstance> runningExperiments = new MarkableMap<ExperimentInstance>(lock, "Running Experiments");
 	
+	private MarkableMap<ExperimentInfo> stoppedExperiments = new MarkableMap<ExperimentInfo>(lock, "Stopped Experiments");
+	
 	// FIXME!!!
 	private static int counter = 0;
+	
+	public POPRunner(DeployProperties p) {
+		
+		globalLogger.info("Reading configuration...");
+		
+		int threads = p.getIntProperty("filetransfer.threads", 1);
+		
+		if (threads <= 0) { 
+			globalLogger.warn("Number of file transfer threads <= 0: reset to 1");
+			threads = 1;
+		} 
+		
+		if (threads > MAX_FILETRANSFER_THREADS) {
+			globalLogger.warn("Number of file transfer threads exceeds maximum: reset to " + MAX_FILETRANSFER_THREADS);
+			threads = MAX_FILETRANSFER_THREADS;
+		}
 
-	private POPRunner() {
-		fileTransferService = new FileTransferService(1);
+		globalLogger.info("filetransfer.threads = " + threads);
+		
+		fileTransferService = new FileTransferService(threads);
+		
+		// Add more info...
+		
+		globalLogger.info("Configuration successfull");
 	}
 	
 	public String getTempDir() {
 		return "/tmp";
 	}
-	
-	/* Configuration */
-	
-	public void addConfigurationTemplate(ConfigurationTemplate template) throws Exception { 
-		configurations.add(template);
-	}
-	
-	public List<String> listConfigurations() { 
-		return configurations.getKeys();
-	}
-	
-	public ConfigurationTemplate getConfigurationTemplate(String ID) throws Exception { 
-		return configurations.get(ID);
-	}
-	
-	public void removeConfigurationTemplate(String ID) throws Exception { 
-		configurations.remove(ID);
-	}
-	
-	/* Worker */
-	
-	public void addWorker(WorkerDescription worker) throws Exception { 
-		workers.add(worker);
-	}
-	
-	public List<String> listWorkers() { 
-		return workers.getKeys();
-	}
-	
-	public WorkerDescription getWorker(String ID) throws Exception { 
-		return workers.get(ID);
-	}
-	
-	public void removeWorker(String ID) throws Exception { 
-		workers.remove(ID);
-	}
 
-	/* Inputs */
 	
-	public void addInputFileSet(FileSet f) throws Exception { 
-		inputs.add(f);
-	}
-
-	public List<String> listInputFileSets() { 
-		return inputs.getKeys();
-	}
-	
-	public FileSet getInputFileSet(String ID) throws Exception { 
-		return inputs.get(ID);
-	}
-
-	public void removeInputFileSet(String ID) throws Exception { 
-		inputs.remove(ID);
-	}
-	
-	/* Outputs */
-	
-	public void addOutputFileSet(FileSet f) throws Exception { 
-		outputs.add(f);
-	}
-
-	public List<String> listOutputFileSets() { 
-		return outputs.getKeys();
-	}
-	
-	public FileSet getOutputFileSet(String ID) throws Exception { 
-		return outputs.get(ID);
-	}
-	
-	public void removeOutputFileSet(String ID) throws Exception { 
-		outputs.remove(ID);
-	}
-	
-	/* Experiment Descriptions */
-	
-	public void addExperimentDescription(ExperimentDescription exp) throws Exception { 
-		experimentDescriptions.add(exp);
-	}
-
-	public List<String> listExperimentDescriptions() { 
-		return experimentDescriptions.getKeys();
-	}
-
-	public ExperimentDescription ExperimentDescription(String ID) throws Exception { 
-		return experimentDescriptions.get(ID);
-	}
-	
-	public void removeExperimentDescription(String ID) throws Exception { 
-		experimentDescriptions.remove(ID);
-	}
-	
-	/* Experiments */
-	
-	public String startExperiment(String ID) throws Exception { 
-		ExperimentDescription exp = experimentDescriptions.get(ID);
-		String runID = generateID(ID);
-	
-		ExperimentInstance e = new ExperimentInstance(runID, exp, this);
-		runningExperiments.add(e);
-		return e.ID;
-	}
-
-	public void finishedExperiment(ExperimentInstance experimentInstance) {
-		try { 
-			runningExperiments.remove(experimentInstance.ID);
-		} catch (Exception e) {
-			System.out.println("Failed to remove experiment " + experimentInstance.ID);
-		}
-	}
-	
-	public ExperimentInstance getRunningExperiment(String ID) throws Exception { 
-		return runningExperiments.get(ID);
-	}
-	
-	public List<String> listRunningExperiments() {
-		return runningExperiments.getKeys();
-	}
-	
-	public synchronized void stopRunningExperiment(String ID) { 
-		
-	}
-
-	public void run() { 
-		
-		boolean mustPrint = true;
-		
-		while (true) { 
-
-			boolean stateChanged = false;
-			
-			List<String> tmp = listRunningExperiments();
-				
-			if (tmp.size() > 0) { 
-				//System.out.println("Running " + tmp.size() + " experiments: ");
-					
-				for (String ID : tmp) { 
-					try { 
-						ExperimentInstance e = getRunningExperiment(ID);
-						//System.out.println(" " + e.ID + " on " + e.worker.ID);
-						boolean change = e.run();
-						stateChanged = stateChanged | change;
-					} catch (Exception e) {
-						System.out.println("Failed to retrieve experiment: " + ID);
-						System.out.println(e.getLocalizedMessage());
-						e.printStackTrace();
-					}
-				}
-
-				mustPrint = true;
-				
-//				System.out.println();
-			} else { 
-				if (mustPrint) { 
-					System.out.println("POPRunner now idle...");
-					mustPrint = false;
-				}
-			}
-
-			if (!stateChanged) { 
-				sleep(1);
-			}
-		}
-		
-	}
-	
-	/* Miscellaneous utility methods to parse the input */
-	
-	private static String getProperty(DeployProperties properties, String key) throws Exception { 
-		
-		String tmp = properties.getProperty(key, null);
-		
-		if (tmp == null) {
-			throw new Exception("Missing or invalid field: " + key);
-		}
-		
-		return tmp;
-	}
-	
-	/*
-	private static ResourceDescription loadResourceDescription(String base, DeployProperties machines) throws Exception { 
-		
-		String URI = machines.getProperty(base + ".uri");
-		
-		if (URI == null) { 
-			throw new Exception("No " + base + ".uri defined!");
-		}
-		
-		String name = machines.getProperty(base + ".user.name", null);
-		String key = machines.getProperty(base + ".user.key", null);
-		String [] adaptors = machines.getStringList(base + ".adaptors", ",", null);
-		
-		return new ResourceDescription(URI, name, key, adaptors);
-	}
-	*/
-	
-	public static WorkerDescription readWorker(String file) throws Exception { 
-		
-		DeployProperties p = new DeployProperties();
-		p.loadFromFile(file);
-		
-		String ID = getProperty(p, "ID");
-		
-		URI jobServer = new URI(getProperty(p, "job.uri"));
-		URI fileServer = jobServer;
-		
-		if (p.containsKey("file.uri")) { 
-			fileServer = new URI(getProperty(p, "file.uri"));
-		}
-				
-		//ResourceDescription host = loadResourceDescription("job", p);
-		//ResourceDescription files = loadResourceDescription("file", p);
-		//ResourceDescription gateway = null;
-		
-		//if (p.containsKey("gateway")) { 
-		//   gateway = loadResourceDescription("gateway", p);
-		//} 
-
-		String inputDir = getProperty(p, "inputDir");
-		String outputDir = getProperty(p, "outputDir");
-		String experimentDir = getProperty(p, "experimentDir");
-		String templateDir = getProperty(p, "templateDir");
-
-		HashMap<String, String> values = new HashMap<String, String>(); 
-		
-		for (Entry<Object, Object> entry : p.entrySet()) { 
-			
-			if (!(entry.getKey() instanceof String && entry.getValue() instanceof String)) { 
-				throw new Exception("Failed to parse worker description " + file);
-			} 
-
-			String key = (String) entry.getKey();
-			String value = (String) entry.getValue();
-			
-			values.put("worker." + key, value);
-		}
-		
-		return new WorkerDescription(ID, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, values);
-	}
-	
-	public static ExperimentDescription readExperimentDescription(String file) throws Exception { 
-
-		DeployProperties p = new DeployProperties();
-		p.loadFromFile(file);
-	
-		String baseID = getProperty(p, "baseID");
-		String config = getProperty(p, "configuration");
-		String worker = getProperty(p, "worker");
-		String inputs = getProperty(p, "stageIn");
-		String outputs = getProperty(p, "stageOut");
-		
-		return new ExperimentDescription(baseID, config, worker, inputs, outputs);
-	}
-	
-	public static FileSet readFileSet(String file) throws IOException, URISyntaxException { 
-		
-		BufferedReader r = new BufferedReader(new FileReader(new File(file)));
-
-		LinkedList<URI> files = new LinkedList<URI>();
-		
-		String ID = r.readLine();
-		
-		String line = r.readLine();
-		
-		while (line != null) { 
-			files.add(new URI(line));
-			line = r.readLine();
-		}
-		
-		r.close();
-
-		return new FileSet(ID, files);		
-	}
-		
-	private static String format(int number, int pos) { 
+	private String format(int number, int pos) { 
 		
 		String tmp = "" + number;
 		
@@ -328,7 +76,7 @@ public class POPRunner {
 		return tmp;
 	}
  	
-	private synchronized static String generateID(String baseID) {
+	private synchronized String generateID(String baseID) {
 		
 		Calendar c = Calendar.getInstance();
 		
@@ -347,40 +95,216 @@ public class POPRunner {
 		return b.toString();
 	}
 	
-	public static void sleep(int seconds) { 
+	private void sleep(int seconds) { 
 		try { 
 			Thread.sleep(seconds*1000);
 		} catch (Exception e) {
 			// ignored
 		}
 	}
+	
+	/* Configuration */
+	@Override
+	public void addConfigurationTemplate(ConfigurationTemplate template) throws Exception { 
+		configurations.add(template);
+	}
 
+	@Override
+	public List<String> listConfigurationTemplates() { 
+		return configurations.getKeys();
+	}
 	
+	@Override
+	public ConfigurationTemplate getConfigurationTemplate(String ID) throws Exception { 
+		return configurations.get(ID);
+	}
 	
-	public static void main(String [] args) throws FileNotFoundException, Exception { 
+	@Override
+	public void removeConfigurationTemplate(String ID) throws Exception { 
+		configurations.remove(ID);
+	}
+	
+	/* Worker */
+
+	@Override
+	public void addWorkerDescription(WorkerDescription worker) throws Exception { 
+		workers.add(worker);
+	}
+	
+	@Override
+	public List<String> listWorkerDescriptions() { 
+		return workers.getKeys();
+	}
+
+	@Override
+	public WorkerDescription getWorkerDescription(String ID) throws Exception { 
+		return workers.get(ID);
+	}
+
+	@Override
+	public void removeWorkerDescription(String ID) throws Exception { 
+		workers.remove(ID);
+	}
+
+	/* Inputs */
+	@Override
+	public void addInputFileSet(FileSet f) throws Exception { 
+		inputs.add(f);
+	}
+
+	@Override
+	public List<String> listInputFileSets() { 
+		return inputs.getKeys();
+	}
+
+	@Override
+	public FileSet getInputFileSet(String ID) throws Exception { 
+		return inputs.get(ID);
+	}
+
+	@Override
+	public void removeInputFileSet(String ID) throws Exception { 
+		inputs.remove(ID);
+	}
+	
+	/* Outputs */
+/*	
+	public void addOutputFileSet(FileSet f) throws Exception { 
+		outputs.add(f);
+	}
+
+	public List<String> listOutputFileSets() { 
+		return outputs.getKeys();
+	}
+	
+	public FileSet getOutputFileSet(String ID) throws Exception { 
+		return outputs.get(ID);
+	}
+	
+	public void removeOutputFileSet(String ID) throws Exception { 
+		outputs.remove(ID);
+	}
+*/	
+	/* Experiment Descriptions */
+
+	@Override
+	public void addExperimentDescription(ExperimentDescription exp) throws Exception { 
+		experimentDescriptions.add(exp);
+	}
+
+	@Override
+	public List<String> listExperimentDescriptions() { 
+		return experimentDescriptions.getKeys();
+	}
+
+	@Override
+	public ExperimentDescription getExperimentDescription(String ID) throws Exception { 
+		return experimentDescriptions.get(ID);
+	}
+
+	@Override
+	public void removeExperimentDescription(String ID) throws Exception { 
+		experimentDescriptions.remove(ID);
+	}
+	
+	/* Experiments */	
+	@Override
+	public String startExperiment(String ID) throws Exception { 
+		ExperimentDescription exp = experimentDescriptions.get(ID);
+		String runID = generateID(ID);
+	
+		ExperimentInstance e = new ExperimentInstance(runID, exp, this);
+		runningExperiments.add(e);
+		return e.ID;
+	}
+
+	protected void finishedExperiment(ExperimentInstance experimentInstance) {
 		
-		POPRunner runner = new POPRunner();
-	
-		for (int i=0;i<args.length;i++) { 
-			if (args[i].equals("--config")) { 
-				runner.addConfigurationTemplate(new TemplateParser(new File(args[++i])).parse());
-			} else if (args[i].equals("--worker")) {
-				runner.addWorker(readWorker(args[++i]));
-			} else if (args[i].equals("--inputs")) {
-				runner.addInputFileSet(readFileSet(args[++i]));
-			} else if (args[i].equals("--outputs")) {
-				runner.addOutputFileSet(readFileSet(args[++i]));
-			} else if (args[i].equals("--experiment")) {
-				runner.addExperimentDescription(readExperimentDescription(args[++i]));
-			} else { 
-				System.err.println("Unknown option: " + args[i]);
+		synchronized (lock) {
+
+			try { 
+				ExperimentInstance tmp = runningExperiments.remove(experimentInstance.ID);
+				
+				if (tmp != null) { 
+					stoppedExperiments.add(tmp.getInfo());
+				}
+			} catch (Exception e) {
+				System.out.println("Failed to remove experiment " + experimentInstance.ID);
 			}
 		}
+	}
+
+	@Override
+	public ExperimentInfo getRunningExperiment(String ID) throws Exception {
+		return runningExperiments.get(ID).getInfo();
+	}
+	
+	@Override
+	public List<String> listRunningExperiments() {
+		return runningExperiments.getKeys();
+	}
+
+	private ExperimentInstance getExperimentInstance(String ID) throws Exception {
+		return runningExperiments.get(ID);
+	}
+
+	@Override
+	public void stopRunningExperiment(String ID) throws Exception {
+		getExperimentInstance(ID).mustStop();
+	}
+
+	@Override
+	public List<String> listStoppedExperiments() throws Exception { 
+		return stoppedExperiments.getKeys();
+	}
+
+	@Override
+	public ExperimentInfo getStoppedExperiment(String experimentID) 	throws Exception {
+		return stoppedExperiments.get(experimentID);
+	}
+
+	@Override
+	public void removeStoppedExperiment(String experimentID) throws Exception {
+		stoppedExperiments.remove(experimentID);		
+	}	
+	
+	public void run() { 
 		
-		for (String id : runner.listExperimentDescriptions()) {
-			runner.startExperiment(id);
+		globalLogger.info("Starting...");
+		
+		boolean mustPrint = true;
+		
+		while (true) { 
+
+			boolean stateChanged = false;
+			
+			List<String> tmp = listRunningExperiments();
+				
+			if (tmp.size() > 0) { 
+				//System.out.println("Running " + tmp.size() + " experiments: ");
+					
+				for (String ID : tmp) { 
+					try { 
+						ExperimentInstance e = getExperimentInstance(ID);
+						//System.out.println(" " + e.ID + " on " + e.worker.ID);
+						boolean change = e.run();
+						stateChanged = stateChanged | change;
+					} catch (Exception e) {
+						globalLogger.error("Failed to retrieve experiment: " + ID, e);
+					}
+				}
+
+				mustPrint = true;
+			} else { 
+				if (mustPrint) { 
+					globalLogger.info("I am now idle...");
+					mustPrint = false;
+				}
+			}
+
+			if (!stateChanged) { 
+				sleep(1);
+			}
 		}
-		
-		runner.run();
 	}
 }

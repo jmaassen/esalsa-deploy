@@ -2,7 +2,7 @@
 
 ID = localhost.1-degree.cartesian.4-cores
 
-job.uri = ssh://localhost
+uri = ssh://localhost
 
 templateDir = /home/jason/esalsa/templates/pop_1d_c_4c
 inputDir = /home/jason/esalsa/input
@@ -14,5 +14,4 @@ nprocs_tropic = 4
 clinic_distribution_type = cartesian
 tropic_distribution_type = cartesian
 distribution_file = unknown
-
 

@@ -1,10 +1,13 @@
 package nl.esciencecenter.esalsa.deploy;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 
-public class WorkerDescription extends MarkableObject {
+public class WorkerDescription extends MarkableObject implements Serializable {
 
+	private static final long serialVersionUID = -2173753719544719562L;
+	
 	public final URI jobServer;
 	public final URI fileServer;
 	

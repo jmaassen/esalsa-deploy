@@ -1,4 +1,4 @@
-baseID = POP_1degree_DAS4VU
+ID = POP_1degree_DAS4VU
 configuration = config.1degree.x1
 worker = DAS4.VU.1-degree.cartesian.32-cores
 stageIn = input.1-degree.x1

@@ -31,7 +31,11 @@ public class BulkFileTransferHandle implements FileTransferObserver {
 		return true;
 	}
 
-	
+	public void cancel() {
+		for (FileTransferHandle h : handles) {
+			h.cancel();
+		}
+	}
 	
 	public List<Exception> getExceptions() {
 		
@@ -58,4 +62,5 @@ public class BulkFileTransferHandle implements FileTransferObserver {
 			}
 		}
 	}
+
 }

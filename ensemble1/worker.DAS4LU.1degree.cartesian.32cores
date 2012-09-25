@@ -2,7 +2,7 @@
 
 ID = DAS4.LU.1-degree.cartesian.32-cores
 
-job.uri = ssh://fs1.das4.liacs.nl
+uri = ssh://fs1.das4.liacs.nl
 
 templateDir = /home/jason/esalsa/templates/pop_1d_c_32c
 inputDir = /var/scratch/jason/esalsa/experiments/input
