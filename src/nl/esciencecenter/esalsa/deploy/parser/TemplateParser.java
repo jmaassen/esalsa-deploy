@@ -110,7 +110,7 @@ public class TemplateParser {
 	
 	public ConfigurationTemplate parse() throws Exception { 
 		
-		template = new ConfigurationTemplate(file.getName());
+		template = new ConfigurationTemplate(file.getName(), "This is a comment");
 		
 		while (readBlock());
 		

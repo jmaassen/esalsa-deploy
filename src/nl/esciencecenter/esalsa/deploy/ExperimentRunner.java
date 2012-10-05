@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -17,9 +16,7 @@ import nl.esciencecenter.esalsa.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ExperimentInstance extends MarkableObject {
-
-	private static final long serialVersionUID = -1880840203028855856L;
+public class ExperimentRunner {
 
 	// Global logger 
 	private static final Logger globalLogger = LoggerFactory.getLogger("eSalsa");
@@ -29,45 +26,9 @@ public class ExperimentInstance extends MarkableObject {
 
 	// The parent object;
 	private final POPRunner parent;
-	
-	/** Unique ID for this running experiment. */
-	public final String ID; 
 
-	/** Input directory on target machine. */
-	public final URI inputDir; 
-
-	/** Template directory on target machine. */
-	public final URI templateDir; 
-	
-	/** Experiment directory on target machine. */
-	public final URI experimentDir; 
-
-	/** Output directory on target machine. */
-	public final URI outputDir; 
-	
-	/** StartScript in experimentDir on target machine. */
-	public final URI startScript; 
-	
-	/** MonitorScript in experimentDir on target machine. */
-	public final URI monitorScript; 
-	
-	/** StopScript in experimentDir on target machine. */
-	public final URI stopScript; 
-	
-	/** The original experiment description */
-	public final ExperimentDescription experiment;
-	
-	/** The worker on which this experiment will be run. */
-	public final WorkerDescription worker; 
-	
-	/** The (possibly generated) pop_in configuration file.  */
-	public final String configuration;
-	
-	/** The list of input file that must be staged in before the run. */
-	public final FileSet input;
-	
-	/** The list of output file that must be staged out after the run. */
-//	public final FileSet output;
+	// Info, as store in database!
+	private final ExperimentInfo info;
 	
 	// A handle for the file transfers performed at stageIn and stageOut.
 	private BulkFileTransferHandle fileTransfers;
@@ -114,19 +75,12 @@ public class ExperimentInstance extends MarkableObject {
 	// Log describing the progress of the job;
 	private final StringBuilder log = new StringBuilder();
 	
-	public ExperimentInstance(String ID, ExperimentDescription experiment, POPRunner parent) throws Exception {
+	public ExperimentRunner(ExperimentInfo info, POPRunner parent) throws Exception {
 		
-		super(ID);
-		
-		this.ID = ID;
-		this.experiment = experiment;
 		this.parent = parent;
+		this.info = info;
 		
-		worker = parent.getWorkerDescription(experiment.worker);
-		input = parent.getInputFileSet(experiment.inputs);
-//		output = parent.getOutputFileSet(experiment.stageOut);
-		
-		localOutputDir = new File(parent.getTempDir() + File.separator + ID);
+		localOutputDir = new File(parent.getTempDir() + File.separator + info.ID);
 		
 		if (localOutputDir.exists()) { 
 			throw new Exception("Local temp dir already exists: " + localOutputDir);
@@ -135,56 +89,44 @@ public class ExperimentInstance extends MarkableObject {
 		if (!localOutputDir.mkdirs()) { 
 			throw new Exception("Failed to create local temp dir: " + localOutputDir);
 		}
-		
-		ConfigurationTemplate config = parent.getConfigurationTemplate(experiment.configuration);
-		
-		experimentDir = worker.fileServer.resolve(worker.experimentDir + File.separator + ID + File.separator);
-		outputDir = worker.fileServer.resolve(worker.outputDir + File.separator + ID + File.separator);
-		inputDir = worker.fileServer.resolve(worker.inputDir + File.separator);
-		templateDir = worker.fileServer.resolve(worker.templateDir + File.separator);
-
-		startScript = experimentDir.resolve("start.sh");
-		monitorScript = experimentDir.resolve("monitor.sh");
-		stopScript = experimentDir.resolve("stop.sh");
-		
-		HashMap<String, String> tmp = worker.getMapping();
-
-		tmp.put("generated.runID", ID);
-		tmp.put("generated.log", ID + ".log");
-		tmp.put("generated.experimentDir", worker.experimentDir + File.separator + ID);
-		tmp.put("generated.outputDir", worker.outputDir + File.separator + ID);
-		
-		configuration = config.generate(worker.getMapping());
 
 		try {
 			localConfig = new File(localOutputDir + File.separator + "pop_in");			
 			BufferedWriter w = new BufferedWriter(new FileWriter(localConfig));
-			w.write(configuration);
+			w.write(info.configuration);
 			w.close();
 		} catch (Exception e) {
 			throw new Exception("Failed to locally store generated config file!", e);
 		}
 	}
 	
+	public ExperimentInfo getInfo() {
+		return info;
+	}
+	
+	public String getID() {
+		return info.ID;
+	}
+	
 	private void info(String message) { 
-		globalLogger.info("[" + ID + "] " + message);
+		globalLogger.info("[" + info.ID + "] " + message);
 	}
 	
 	private void warn(String message, Throwable e) { 
-		globalLogger.warn("[" + ID + "] " + message, e);
+		globalLogger.warn("[" + info.ID + "] " + message, e);
 	}
 
 	private void warn(String message) { 
-		globalLogger.warn("[" + ID + "] " + message);
+		globalLogger.warn("[" + info.ID + "] " + message);
 	}
 	
 	private void error(String message, Throwable e) { 
-		globalLogger.error("[" + ID + "] " + message, e);
+		globalLogger.error("[" + info.ID + "] " + message, e);
 		setState(State.ERROR, message + " " + e.getMessage());
 	}
 	
 	private void error(String message) { 
-		globalLogger.error("[" + ID + "] " + message);
+		globalLogger.error("[" + info.ID + "] " + message);
 		setState(State.ERROR, message);
 	}
 	
@@ -283,23 +225,23 @@ public class ExperimentInstance extends MarkableObject {
 		
 		// First create the remote directories private to this experiment				
 		try { 
-			if (!Utils.createDir(experimentDir)) { 
-				error("Failed to create remote experiment directory: " + experimentDir);
+			if (!Utils.createDir(info.experimentDir)) { 
+				error("Failed to create remote experiment directory: " + info.experimentDir);
 				return;
 			}
 		} catch (Exception e) {
-			error("Failed to create remote directory: " + experimentDir, e);
+			error("Failed to create remote directory: " + info.experimentDir, e);
 			return;
 		}
 		
-		if (!experimentDir.equals(outputDir)) { 
+		if (!info.experimentDir.equals(info.outputDir)) { 
 			try {
-				if (!Utils.createDir(outputDir)) { 
-					error("Failed to create remote output directory: " + outputDir);
+				if (!Utils.createDir(info.outputDir)) { 
+					error("Failed to create remote output directory: " + info.outputDir);
 					return;
 				}
 			} catch (Exception e) {
-				error("Failed to create remote directory: " + outputDir, e);
+				error("Failed to create remote directory: " + info.outputDir, e);
 				return;
 			}
 		}
@@ -311,8 +253,8 @@ public class ExperimentInstance extends MarkableObject {
 		
 		// Add all input files to the file transfer list 
 		try { 	
-			for (URI file : input.getFiles()) {
-				URI target = inputDir.resolve(Utils.getFileName(file));
+			for (URI file : info.inputFiles) {
+				URI target = info.inputDir.resolve(Utils.getFileName(file));
 				inputsTransfers.addLast(new FileTransferDescription(file, target));
 
 //				System.out.println("    " + file + " -> " + target);		
@@ -334,7 +276,7 @@ public class ExperimentInstance extends MarkableObject {
 			return;
 		}
 			
-		URI target = experimentDir.resolve("pop_in");
+		URI target = info.experimentDir.resolve("pop_in");
 		inputsTransfers.add(new FileTransferDescription(source, target));
 
 //System.out.println("    " + source + " -> " + target);		
@@ -345,7 +287,7 @@ public class ExperimentInstance extends MarkableObject {
 		
 		// Add the files in the remote experiment template dir.		
 		try {
-			Utils.createTransferList(templateDir, experimentDir, inputsTransfers);
+			Utils.createTransferList(info.templateDir, info.experimentDir, inputsTransfers);
 		} catch (Exception e1) {
 			error("Failed create transferlist for remote template directory", e1);
 			return;
@@ -393,18 +335,18 @@ public class ExperimentInstance extends MarkableObject {
 	
 		// Check if the essential files are present in the experiment directory, 
 		// as can be expected after the file transfer.
-		if (!Utils.accessibleFile(startScript)) { 
-			error("Failed to find the remote start script: " + startScript);
+		if (!Utils.accessibleFile(info.startScript)) { 
+			error("Failed to find the remote start script: " + info.startScript);
 			return;
 		}
 
-		if (!Utils.accessibleFile(stopScript)) { 
-			error("Failed to find the remote stop script: " + stopScript);
+		if (!Utils.accessibleFile(info.stopScript)) { 
+			error("Failed to find the remote stop script: " + info.stopScript);
 			return;
 		}
 
-		if (!Utils.accessibleFile(monitorScript)) { 
-			error("Failed to find the remote monitor script: " + monitorScript);
+		if (!Utils.accessibleFile(info.monitorScript)) { 
+			error("Failed to find the remote monitor script: " + info.monitorScript);
 			return;
 		}
 
@@ -430,12 +372,12 @@ public class ExperimentInstance extends MarkableObject {
 		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
 		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
 		
-		int exit = Utils.runRemoteScript(worker.jobServer, experimentDir.getPath(), "start.sh", 
-				null, stdout, stderr, globalLogger, "[" + ID + "]");
+		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir.getPath(), "start.sh", 
+				null, stdout, stderr, globalLogger, "[" + info.ID + "]");
 		
 		if (exit != 0) { 
 			// Should log to experiment specific log file ?
-			error("Failed to start experiment " + ID + " (exit code = " + exit + ")");			
+			error("Failed to start experiment " + info.ID + " (exit code = " + exit + ")");			
 			return;
 		}
 		
@@ -449,14 +391,14 @@ public class ExperimentInstance extends MarkableObject {
 			error = Utils.readOutput(stderr, null);
 			info("stderr: " + error.toString());
 		} catch (IOException e) {
-			warn("Failed to read stderr of experiment  " + ID, e);
+			warn("Failed to read stderr of experiment  " + info.ID, e);
 		}
 		
 		try { 
 			output = Utils.readOutput(stdout, null);
 			info("stdout: " + output.toString());
 		} catch (IOException e) {
-			error("Failed to read stdout of experiment  "+ ID, e);
+			error("Failed to read stdout of experiment  "+ info.ID, e);
 			return;
 		}
 
@@ -502,12 +444,12 @@ public class ExperimentInstance extends MarkableObject {
 		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
 		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
 		
-		int exit = Utils.runRemoteScript(worker.jobServer, experimentDir.getPath(), 
-				"stop.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + ID + "]");
+		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir.getPath(), 
+				"stop.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + info.ID + "]");
 		
 		if (exit != 0) { 
 			// Should log to experiment specific log file ?
-			error("Failed to stop experiment " + ID + " (exit code = " + exit + ")");			
+			error("Failed to stop experiment " + info.ID + " (exit code = " + exit + ")");			
 			return;
 		}
 		
@@ -521,14 +463,14 @@ public class ExperimentInstance extends MarkableObject {
 			error = Utils.readOutput(stderr, null);
 			info("stderr: " + error.toString());
 		} catch (IOException e) {
-			warn("Failed to read stderr of experiment  " + ID, e);
+			warn("Failed to read stderr of experiment  " + info.ID, e);
 		}
 		
 		try { 
 			output = Utils.readOutput(stdout, null);
 			info("stdout: " + output.toString());
 		} catch (IOException e) {
-			error("Failed to read stdout of experiment  "+ ID, e);
+			error("Failed to read stdout of experiment  "+ info.ID, e);
 			return;
 		}
 
@@ -570,12 +512,12 @@ public class ExperimentInstance extends MarkableObject {
 		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
 		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
 		
-		int exit = Utils.runRemoteScript(worker.jobServer, experimentDir.getPath(), 
-				"monitor.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + ID + "]");
+		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir.getPath(), 
+				"monitor.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + info.ID + "]");
 		
 		if (exit != 0) { 
 			// Should log to experiment specific log file ?
-			error("Failed to monitor experiment " + ID + " (JOBID=" + jobID + ", exit code = " + exit + ")");
+			error("Failed to monitor experiment " + info.ID + " (JOBID=" + jobID + ", exit code = " + exit + ")");
 			return;
 		}
 		
@@ -589,14 +531,14 @@ public class ExperimentInstance extends MarkableObject {
 			error = Utils.readOutput(stderr, null);
 			info("stderr: " + error.toString());
 		} catch (IOException e) {
-			warn("Failed to read stderr of monitor script of experiment  "+ ID, e);
+			warn("Failed to read stderr of monitor script of experiment  "+ info.ID, e);
 		}
 		
 		try { 
 			output = Utils.readOutput(stdout, null);
 			info("stdout: " + output.toString());
 		} catch (IOException e) {
-			error("Failed to read stdout of monitor script of experiment  "+ ID, e);
+			error("Failed to read stdout of monitor script of experiment  "+ info.ID, e);
 			return;
 		}
 		
@@ -763,9 +705,5 @@ public class ExperimentInstance extends MarkableObject {
 		}
 		
 		return stateChanged;
-	}
-
-	public synchronized ExperimentInfo getInfo() {
-		return new ExperimentInfo(ID, experiment.ID, state.name(), log.toString());
-	}
+	}	
 }

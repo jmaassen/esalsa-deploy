@@ -1,4 +1,4 @@
-package nl.esciencecenter.esalsa.deploy.ui.cli;
+package nl.esciencecenter.esalsa.deploy.server;
 
 import java.io.File;
 import java.io.IOException;

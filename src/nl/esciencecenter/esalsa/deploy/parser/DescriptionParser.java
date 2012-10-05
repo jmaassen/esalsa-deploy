@@ -71,7 +71,7 @@ public class DescriptionParser {
 			values.put("worker." + key, value);
 		}
 		
-		return new WorkerDescription(ID, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, values);
+		return new WorkerDescription(ID, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, "This is a comment", values);
 	}
 	
 	public static ExperimentDescription readExperimentDescription(String file) throws Exception { 
@@ -84,7 +84,7 @@ public class DescriptionParser {
 		String worker = getProperty(p, "worker", "ExperimentDescription");
 		String input = getProperty(p, "input", "ExperimentDescription");
 		
-		return new ExperimentDescription(ID, config, worker, input);
+		return new ExperimentDescription(ID, config, worker, input, "This is a comment");
 	}
 	
 	public static FileSet readFileSet(String file) throws IOException, URISyntaxException { 
@@ -104,7 +104,7 @@ public class DescriptionParser {
 		
 		r.close();
 
-		return new FileSet(ID, files);		
+		return new FileSet(ID, "This is a comment", files);		
 	}
 	
 	public static ConfigurationTemplate readConfigurationTemplate(String file) throws Exception { 

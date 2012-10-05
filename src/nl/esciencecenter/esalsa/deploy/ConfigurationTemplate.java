@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class ConfigurationTemplate extends MarkableObject implements Serializable {
+public class ConfigurationTemplate extends StoreableObject implements Serializable {
 
 	private static final long serialVersionUID = -7572136097006754510L;
 
@@ -22,6 +22,10 @@ public class ConfigurationTemplate extends MarkableObject implements Serializabl
 			this.key = key;
 			this.value = value;
 			this.variableName = variableName;
+		}
+		
+		public String toString() { 
+			return key + " = " + value;
 		}
 	}
 	
@@ -41,14 +45,29 @@ public class ConfigurationTemplate extends MarkableObject implements Serializabl
 		public void add(String key, String value, String variableName) {
 			fields.add(new Field(key, value, variableName));
 		}
+		
+		public String toString() { 
+			StringBuilder sb = new StringBuilder(name + "\n");
+			
+			for (Field f : fields) {
+				sb.append("   ");
+				sb.append(f.toString());
+				sb.append("\n");
+			}
+			
+			sb.append("/\n");
+			
+			return sb.toString();
+		}
+		
 	}
 	
 	private LinkedList<ConfigurationTemplate.Block> blocks = new LinkedList<ConfigurationTemplate.Block>();
 	
 	private HashSet<String> variables = new HashSet<String>();
 	
-	public ConfigurationTemplate(String ID) {
-		super(ID);
+	public ConfigurationTemplate(String ID, String comment) {
+		super(ID, comment);
 	}
 	
 	public ConfigurationTemplate.Block addBlock(String name) { 
@@ -123,4 +142,18 @@ public class ConfigurationTemplate extends MarkableObject implements Serializabl
 		
 		return sb.toString();
 	}	
+	
+	public String toString() { 
+		
+		StringBuilder sb = new StringBuilder();
+		
+		for (Block block : blocks) {
+			sb.append(block.toString());
+			sb.append("\n");
+		}
+		
+		return sb.toString();
+		
+	}
+	
 }

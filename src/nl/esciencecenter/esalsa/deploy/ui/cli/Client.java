@@ -15,6 +15,7 @@ import nl.esciencecenter.esalsa.deploy.ExperimentDescription;
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
 import nl.esciencecenter.esalsa.deploy.parser.DescriptionParser;
+import nl.esciencecenter.esalsa.deploy.server.Stub;
 
 public class Client {
 	
@@ -445,15 +446,43 @@ public class Client {
 		}
 	}
 	
+	private void close() throws IOException { 
+		out.flush();
+		out.close();
+		in.close();
+		
+		stub.close();
+	}
+	
 	public static void main(String [] args) {
 		
-		if (args.length != 1) { 
+		if (args.length == 0) { 
 			System.out.println("CLI [server address]");
 			System.exit(1);
 		}
 		
-		try { 
-			new Client(args[0], DEFAULT_PORT).run();
+		try {
+			
+			Client c = new Client(args[0], DEFAULT_PORT);
+			
+			if (args.length == 1) { 
+				c.run();
+			} else { 			
+				StringBuilder line = new StringBuilder(args[1]);
+				
+				for (int i=2;i<args.length;i++) { 
+					line.append(" ");
+					line.append(args[i]); 
+				}
+				
+				if (c.parse(line.toString())) { 
+					c.processCommand();
+					c.close();
+				} else { 
+					System.out.println("Failed to parse command: \"" + line + "\"");
+				}
+			}
+			
 		} catch (Exception e) {
 			System.err.println("CLI Failed unexpectedly: " + e);
 			e.printStackTrace(System.err);

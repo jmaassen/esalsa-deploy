@@ -1,6 +1,8 @@
 package nl.esciencecenter.esalsa.deploy;
 
+import java.io.File;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
 
 import nl.esciencecenter.esalsa.deploy.parser.DeployProperties;
@@ -15,29 +17,53 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 	
 	private static Logger globalLogger = LoggerFactory.getLogger("eSalsa");
 	
-	private final Object lock = new Object();
-	
 	protected final FileTransferService fileTransferService; 
 	
-	private MarkableMap<ConfigurationTemplate> configurations = new MarkableMap<ConfigurationTemplate>(lock, "Configuration");
+	private Store<ConfigurationTemplate> configurations; 
 	
-	private MarkableMap<WorkerDescription> workers = new MarkableMap<WorkerDescription>(lock, "Worker");
+	private Store<WorkerDescription> workers;
 	
-	private MarkableMap<FileSet> inputs = new MarkableMap<FileSet>(lock, "InputFileSet");
-//	private MarkableMap<FileSet> outputs = new MarkableMap<FileSet>(lock, "OutputFileSet");
+	private Store<FileSet> inputs;
 	
-	private MarkableMap<ExperimentDescription> experimentDescriptions = new MarkableMap<ExperimentDescription>(lock, "Experiment Descriptions");
+	private Store<ExperimentDescription> experimentDescriptions;
 
-	private MarkableMap<ExperimentInstance> runningExperiments = new MarkableMap<ExperimentInstance>(lock, "Running Experiments");
+	private Store<ExperimentInfo> runningExperiments;
 	
-	private MarkableMap<ExperimentInfo> stoppedExperiments = new MarkableMap<ExperimentInfo>(lock, "Stopped Experiments");
+	private Store<ExperimentInfo> completedExperiments;
+	
+	private LinkedList<ExperimentRunner> experimentRunners = new LinkedList<ExperimentRunner>();
 	
 	// FIXME!!!
 	private static int counter = 0;
 	
+	private final eSalsaDatabase db; 
+	
 	public POPRunner(DeployProperties p) {
 		
 		globalLogger.info("Reading configuration...");
+
+		String databaseDir = p.getProperty("database.location");
+		
+		if (databaseDir == null) { 
+			globalLogger.error("No database location specified! Please set the database.location property.");
+			System.exit(1);
+		}
+
+		File tmp = new File(databaseDir);
+		
+		if (!tmp.exists()) { 
+			if (!tmp.mkdirs()) { 
+				globalLogger.error("Failed to create database directory " + tmp.getAbsolutePath());
+				System.exit(1);
+			}
+		}
+		
+		if (!tmp.isDirectory() || !(tmp.canWrite() && tmp.canRead())) {
+			globalLogger.error("Cannot access database directory " + tmp.getAbsolutePath());
+			System.exit(1);
+		}
+
+		db = new eSalsaDatabase(databaseDir);
 		
 		int threads = p.getIntProperty("filetransfer.threads", 1);
 		
@@ -55,9 +81,40 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		
 		fileTransferService = new FileTransferService(threads);
 		
-		// Add more info...
-		
 		globalLogger.info("Configuration successfull");
+		
+		globalLogger.info("Initializing datastructures....");
+		
+		configurations = db.getConfigurationTemplates(); 
+		
+		workers = db.getWorkerDescriptions();
+		
+		inputs = db.getInputSets();
+		
+		experimentDescriptions = db.getExperimentDescriptions();
+
+		runningExperiments = db.getRunningExperiments();
+		
+		completedExperiments = db.getCompletedExperiments();
+		
+		globalLogger.info("Recovering running experiments....");
+		
+		List<String> running = runningExperiments.getKeys();
+		
+		if (running != null && running.size() > 0) { 
+			
+			for (String ID : running) { 
+				try { 
+					ExperimentInfo info = runningExperiments.get(ID);
+					
+					ExperimentRunner runner = new ExperimentRunner(info, this);
+					experimentRunners.add(runner);
+					
+				} catch (Exception e) {
+					globalLogger.warn("Failed to restore running experiment " + ID);
+				}
+			}
+		}
 	}
 	
 	public String getTempDir() {
@@ -105,7 +162,7 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 	
 	/* Configuration */
 	@Override
-	public void addConfigurationTemplate(ConfigurationTemplate template) throws Exception { 
+	public void addConfigurationTemplate(ConfigurationTemplate template) throws Exception {
 		configurations.add(template);
 	}
 
@@ -209,34 +266,47 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 	
 	/* Experiments */	
 	@Override
-	public String startExperiment(String ID) throws Exception { 
+	public String startExperiment(String ID) throws Exception {
+		
+		if (ID == null || ID.length() == 0) { 
+			throw new IllegalArgumentException("Illegal ID!");
+		}
+		
 		ExperimentDescription exp = experimentDescriptions.get(ID);
 		String runID = generateID(ID);
 	
-		ExperimentInstance e = new ExperimentInstance(runID, exp, this);
-		runningExperiments.add(e);
-		return e.ID;
+		WorkerDescription worker = workers.get(exp.worker);
+		FileSet input = inputs.get(exp.inputs); 
+		ConfigurationTemplate template = configurations.get(exp.configuration);
+		
+		ExperimentInfo info = new ExperimentInfo(ID, exp.ID, worker, input, template);
+		runningExperiments.add(info);
+		
+		ExperimentRunner e = new ExperimentRunner(info, this);
+		experimentRunners.add(e);
+		return runID;
 	}
 
-	protected void finishedExperiment(ExperimentInstance experimentInstance) {
+	protected void finishedExperiment(ExperimentRunner experimentInstance) {
 		
-		synchronized (lock) {
-
-			try { 
-				ExperimentInstance tmp = runningExperiments.remove(experimentInstance.ID);
-				
-				if (tmp != null) { 
-					stoppedExperiments.add(tmp.getInfo());
-				}
-			} catch (Exception e) {
-				System.out.println("Failed to remove experiment " + experimentInstance.ID);
-			}
+		try { 
+			completedExperiments.add(experimentInstance.getInfo());
+		} catch (Exception e) {
+			System.err.println("INTERNAL ERROR: Failed to add experiment " + experimentInstance.getInfo().ID + " to completed experiments database!");
+			e.printStackTrace();
+		}
+		
+		try { 
+			runningExperiments.remove(experimentInstance.getInfo().ID);
+		} catch (Exception e) {
+			System.err.println("INTERNAL ERROR: Failed to remove experiment " + experimentInstance.getInfo().ID + " from running experiments database!");
+			e.printStackTrace();
 		}
 	}
-
+	
 	@Override
 	public ExperimentInfo getRunningExperiment(String ID) throws Exception {
-		return runningExperiments.get(ID).getInfo();
+		return runningExperiments.get(ID);
 	}
 	
 	@Override
@@ -244,28 +314,34 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		return runningExperiments.getKeys();
 	}
 
-	private ExperimentInstance getExperimentInstance(String ID) throws Exception {
-		return runningExperiments.get(ID);
-	}
+	
+//	private ExperimentInstance getExperimentInstance(String ID) throws Exception {
+		//return runningExperiments.get(ID);
+	//}
 
 	@Override
 	public void stopRunningExperiment(String ID) throws Exception {
-		getExperimentInstance(ID).mustStop();
+		for (ExperimentRunner e : experimentRunners) { 
+			if (ID.equals(e.getID())) { 
+				e.mustStop();
+				return;
+			}
+		}
 	}
 
 	@Override
 	public List<String> listStoppedExperiments() throws Exception { 
-		return stoppedExperiments.getKeys();
+		return completedExperiments.getKeys();
 	}
 
 	@Override
-	public ExperimentInfo getStoppedExperiment(String experimentID) 	throws Exception {
-		return stoppedExperiments.get(experimentID);
+	public ExperimentInfo getStoppedExperiment(String experimentID) throws Exception {
+		return completedExperiments.get(experimentID);
 	}
 
 	@Override
 	public void removeStoppedExperiment(String experimentID) throws Exception {
-		stoppedExperiments.remove(experimentID);		
+		completedExperiments.remove(experimentID);		
 	}	
 	
 	public void run() { 
@@ -278,23 +354,25 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 
 			boolean stateChanged = false;
 			
-			List<String> tmp = listRunningExperiments();
-				
-			if (tmp.size() > 0) { 
-				//System.out.println("Running " + tmp.size() + " experiments: ");
-					
-				for (String ID : tmp) { 
-					try { 
-						ExperimentInstance e = getExperimentInstance(ID);
-						//System.out.println(" " + e.ID + " on " + e.worker.ID);
-						boolean change = e.run();
-						stateChanged = stateChanged | change;
-					} catch (Exception e) {
-						globalLogger.error("Failed to retrieve experiment: " + ID, e);
-					}
-				}
+			if (experimentRunners.size() > 0) { 
 
-				mustPrint = true;
+				for (ExperimentRunner e : experimentRunners) { 
+
+					try { 
+						boolean change = e.run();
+						
+						if (change) { 
+							runningExperiments.update(e.getInfo());
+						}
+						
+						stateChanged = stateChanged | change;
+					} catch (Exception ex) {
+						globalLogger.error("Failed to retrieve experiment: " + e.getInfo().ID, ex);
+					}
+
+					mustPrint = true;
+				} 
+			
 			} else { 
 				if (mustPrint) { 
 					globalLogger.info("I am now idle...");

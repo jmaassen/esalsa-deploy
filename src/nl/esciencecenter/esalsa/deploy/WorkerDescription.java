@@ -1,10 +1,9 @@
 package nl.esciencecenter.esalsa.deploy;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 
-public class WorkerDescription extends MarkableObject implements Serializable {
+public class WorkerDescription extends StoreableObject {
 
 	private static final long serialVersionUID = -2173753719544719562L;
 	
@@ -26,10 +25,12 @@ public class WorkerDescription extends MarkableObject implements Serializable {
 	
 	public WorkerDescription(String ID, 
 			URI jobServer, URI fileServer, 
-			String inputDir, String outputDir, String experimentDir, String templateDir, 
+			String inputDir, String outputDir, 
+			String experimentDir, String templateDir,
+			String comment, 
 			HashMap<String, String> values) {
 		
-		super(ID);
+		super(ID, comment);
 	
 		this.jobServer = jobServer;
 		this.fileServer = fileServer;
@@ -38,7 +39,7 @@ public class WorkerDescription extends MarkableObject implements Serializable {
 		this.outputDir = outputDir;
 		this.experimentDir = experimentDir;
 		this.templateDir = templateDir;
-
+		
 		/*
 		startScript = templateDir + File.separator + "start"; 
 		stopScript = templateDir + File.separator + "stop"; 
