@@ -23,13 +23,18 @@ public interface POPRunnerInterface {
 	public List<String> listInputFileSets() throws Exception;
 	
 	// Experiment Descriptions
-	public void addExperimentDescription(ExperimentDescription exp) throws Exception;
-	public ExperimentDescription getExperimentDescription(String experimentDescriptionID) throws Exception;
+	public void addExperimentDescription(ExperimentTemplate exp) throws Exception;
+	public ExperimentTemplate getExperimentDescription(String experimentDescriptionID) throws Exception;
 	public void removeExperimentDescription(String experimentDescriptionID) throws Exception;
 	public List<String> listExperimentDescriptions() throws Exception;
 		
+	// Waiting experiments
+	public String createExperiment(String descriptionID) throws Exception;
+	public void startExperiment(String experimentID) throws Exception;
+	public List<String> listWaitingExperiments() throws Exception;
+	public ExperimentInfo getWaitingExperiment(String experimentID) throws Exception;
+	
 	// Running Experiments
-	public String startExperiment(String descriptionID) throws Exception;
 	public void stopRunningExperiment(String experimentID) throws Exception;	
 	public List<String> listRunningExperiments() throws Exception;
 	public ExperimentInfo getRunningExperiment(String experimentID) throws Exception;

@@ -49,7 +49,7 @@ public class WorkerDescription extends StoreableObject {
 		this.values = values;
 	}
 		
-	public HashMap<String, String> getMapping() { 
+	public HashMap<String, String> getMapping() {
 		return values;
 	}
 	

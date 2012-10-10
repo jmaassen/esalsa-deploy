@@ -22,8 +22,10 @@ public class SimpleStub implements Protocol {
 			return Protocol.INPUTS;
 		} else if (name.equalsIgnoreCase("configuration")) { 
 			return Protocol.CONFIG;
-		} else if (name.equalsIgnoreCase("experiment")) { 
+		} else if (name.equalsIgnoreCase("experiment")) {			
 			return Protocol.EXPERIMENT;
+		} else if (name.equalsIgnoreCase("waiting")) { 
+			return Protocol.WAITING;		
 		} else if (name.equalsIgnoreCase("running")) { 
 			return Protocol.RUNNING;
 		} else if (name.equalsIgnoreCase("completed")) { 
@@ -104,8 +106,13 @@ public class SimpleStub implements Protocol {
 		return rpc(GET, type, ID);
 	}
 	
-	public String start(String ID) throws Exception {
-		return (String) rpc(START, 0, ID);
+	public String create(String ID) throws Exception {
+		return (String) rpc(CREATE, 0, ID);
+	}
+	
+	
+	public void start(String ID) throws Exception {
+		rpc(START, 0, ID);
 	}
 	
 	public void stop(String ID) throws Exception {

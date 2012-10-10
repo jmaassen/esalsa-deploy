@@ -1,37 +1,51 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
-import javax.swing.JPanel;
-
 import nl.esciencecenter.esalsa.deploy.ExperimentInfo;
+import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
-public class RunningExperimentViewer extends ExperimentViewer implements ActionListener {
+@SuppressWarnings("serial")
+public class RunningExperimentViewer extends ExperimentViewer {
 
-	private static final long serialVersionUID = -8580838957929000835L;
-	
-	public RunningExperimentViewer(RemoteStore<ExperimentInfo> store) { 
-	
-		super(store);
-
-		JPanel buttonPanel = new JPanel();
-	    buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-	    add(buttonPanel, BorderLayout.SOUTH);
-		
-	    JButton stop = new JButton("Stop");
-	    stop.setActionCommand("Stop");;
-	    stop.addActionListener(this);
-	    
-		buttonPanel.add(stop);
+	class StopHandler implements ButtonHandler {
+		@Override
+		public void clicked() {
+			stop();
+		}		
 	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
+	
+	public RunningExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store) { 
+		super(parent, stub, store);
+		addButton("Stop", new StopHandler());
 	}
+	
+	private void stop() { 
+		
+		System.out.println("Got Stop");
+		
+		String ID = (String) getElementValue("ID");
+
+		if (ID == null || ID.trim().length() == 0) {
+			return;
+		}
+			
+		if (!store.contains(ID)) { 
+			return;
+		}
+		
+		boolean confirm = askConfirmation("Are you sure you want to stop experiment " + ID + "?");
+		
+		if (confirm) { 
+			try {
+				stub.stop(ID);
+				showMessage("Stopped experiment " + ID);
+			} catch (Exception e) {			
+				showError("Failed to stop experiment " + ID + "!", e);			
+				return;
+			}
+
+			parent.refresh("running");
+			parent.refresh("completed");
+		}
+	}
+	
 }

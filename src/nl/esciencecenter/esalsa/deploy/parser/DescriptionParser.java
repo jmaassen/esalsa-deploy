@@ -11,12 +11,22 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 
 import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
-import nl.esciencecenter.esalsa.deploy.ExperimentDescription;
+import nl.esciencecenter.esalsa.deploy.ExperimentTemplate;
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
 
 public class DescriptionParser {
 
+	private static String ID = "ID"; 
+	private static String WORKER_URI = "uri";
+	private static String WORKER_FILE_URI = "fileserver.uri";
+	private static String WORKER_INPUTDIR = "inputDir";
+	private static String WORKER_OUTPUTDIR = "outputDir";
+	private static String WORKER_TEMPLATEDIR = "templateDir";
+	private static String WORKER_EXPERIMENTDIR = "experimentDir";
+	
+	private static String [] WORKER_FIELDS = new String [] { ID, WORKER_URI, WORKER_FILE_URI, WORKER_INPUTDIR, WORKER_OUTPUTDIR, WORKER_TEMPLATEDIR, WORKER_EXPERIMENTDIR };
+	
 	private static String getProperty(DeployProperties properties, String key, String description) throws Exception { 
 		
 		String tmp = properties.getProperty(key, null);
@@ -28,6 +38,8 @@ public class DescriptionParser {
 		return tmp;
 	}
 	
+	
+	
 	public static WorkerDescription readWorker(String file) throws Exception { 
 		
 		DeployProperties p = new DeployProperties();
@@ -35,13 +47,13 @@ public class DescriptionParser {
 		
 		System.out.println("Loading file: " + file);
 		
-		String ID = getProperty(p, "ID", "WorkerDescription");
+		String id = getProperty(p, ID, "WorkerDescription");
 		
-		URI jobServer = new URI(getProperty(p, "uri", "WorkerDescription"));
+		URI jobServer = new URI(getProperty(p, WORKER_URI, "WorkerDescription"));
 		URI fileServer = jobServer;
 		
 		if (p.containsKey("file.uri")) { 
-			fileServer = new URI(getProperty(p, "file.uri", "WorkerDescription"));
+			fileServer = new URI(getProperty(p, WORKER_FILE_URI, "WorkerDescription"));
 		}
 				
 		//ResourceDescription host = loadResourceDescription("job", p);
@@ -52,10 +64,10 @@ public class DescriptionParser {
 		//   gateway = loadResourceDescription("gateway", p);
 		//} 
 
-		String inputDir = getProperty(p, "inputDir", "WorkerDescription");
-		String outputDir = getProperty(p, "outputDir", "WorkerDescription");
-		String experimentDir = getProperty(p, "experimentDir", "WorkerDescription");
-		String templateDir = getProperty(p, "templateDir", "WorkerDescription");
+		String inputDir = getProperty(p, WORKER_INPUTDIR, "WorkerDescription");
+		String outputDir = getProperty(p, WORKER_OUTPUTDIR, "WorkerDescription");
+		String experimentDir = getProperty(p, WORKER_EXPERIMENTDIR, "WorkerDescription");
+		String templateDir = getProperty(p, WORKER_TEMPLATEDIR, "WorkerDescription");
 
 		HashMap<String, String> values = new HashMap<String, String>(); 
 		
@@ -68,13 +80,24 @@ public class DescriptionParser {
 			String key = (String) entry.getKey();
 			String value = (String) entry.getValue();
 			
-			values.put("worker." + key, value);
+			boolean found = false;
+			
+			for (String tmp : WORKER_FIELDS) { 
+				
+				if (!found && key.equals(tmp)) { 
+					found = true;
+				}
+			}
+			
+			if (!found) { 
+				values.put(key, value);
+			} 
 		}
 		
-		return new WorkerDescription(ID, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, "This is a comment", values);
+		return new WorkerDescription(id, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, "This is a comment", values);
 	}
 	
-	public static ExperimentDescription readExperimentDescription(String file) throws Exception { 
+	public static ExperimentTemplate readExperimentDescription(String file) throws Exception { 
 
 		DeployProperties p = new DeployProperties();
 		p.loadFromFile(file);
@@ -84,7 +107,7 @@ public class DescriptionParser {
 		String worker = getProperty(p, "worker", "ExperimentDescription");
 		String input = getProperty(p, "input", "ExperimentDescription");
 		
-		return new ExperimentDescription(ID, config, worker, input, "This is a comment");
+		return new ExperimentTemplate(ID, config, worker, input, "This is a comment");
 	}
 	
 	public static FileSet readFileSet(String file) throws IOException, URISyntaxException { 

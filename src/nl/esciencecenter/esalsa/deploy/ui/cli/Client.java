@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
-import nl.esciencecenter.esalsa.deploy.ExperimentDescription;
+import nl.esciencecenter.esalsa.deploy.ExperimentTemplate;
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
 import nl.esciencecenter.esalsa.deploy.parser.DescriptionParser;
@@ -46,7 +46,7 @@ public class Client {
 	private Stub stub;
 
 	public enum Tokens {
-		ADD, GET, REMOVE, LIST, START, STOP, EXIT, HELP;
+		ADD, GET, REMOVE, LIST, CREATE, START, STOP, EXIT, HELP;
 	}
 
 	public enum Targets {
@@ -164,6 +164,7 @@ public class Client {
 			return parseTarget() && parseValue() && checkEmptyLine();
 		case LIST:
 			return parseTarget() && checkEmptyLine();
+		case CREATE:
 		case START:
 		case STOP:
 			return parseValue() && checkEmptyLine();
@@ -222,7 +223,7 @@ public class Client {
 				stub.addConfigurationTemplate((ConfigurationTemplate) currentParameter);
 				break;
 			case EXPERIMENT:
-				stub.addExperimentDescription((ExperimentDescription) currentParameter);
+				stub.addExperimentDescription((ExperimentTemplate) currentParameter);
 				break;
 			case INPUTS:
 				stub.addInputFileSet((FileSet) currentParameter);				
@@ -360,10 +361,18 @@ public class Client {
 			return forwardList();
 		case REMOVE:
 			return forwardRemove();
+		case CREATE:
+			try { 
+				String ID = stub.createExperiment(currentValue);
+				out.write("OK: " + ID + "\n");
+				return true;
+			} catch (Exception e) {
+				out.write("FAILED: " + e.getLocalizedMessage() + "\n");
+				return false;
+			}			
 		case START:
 			try { 
-				String ID = stub.startExperiment(currentValue);
-				out.write("OK: " + ID + "\n");
+				stub.startExperiment(currentValue);
 				return true;
 			} catch (Exception e) {
 				out.write("FAILED: " + e.getLocalizedMessage() + "\n");

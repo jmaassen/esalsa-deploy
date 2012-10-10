@@ -1,17 +1,12 @@
 package nl.esciencecenter.esalsa.deploy.server;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.LinkedList;
 import java.util.List;
 
 import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
-import nl.esciencecenter.esalsa.deploy.ExperimentDescription;
 import nl.esciencecenter.esalsa.deploy.ExperimentInfo;
+import nl.esciencecenter.esalsa.deploy.ExperimentTemplate;
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.POPRunnerInterface;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
@@ -91,13 +86,13 @@ public class Stub implements POPRunnerInterface, Protocol {
 	}
 		
 	@Override
-	public void addExperimentDescription(ExperimentDescription exp) throws Exception {
+	public void addExperimentDescription(ExperimentTemplate exp) throws Exception {
 		stub.add(EXPERIMENT, exp);
 	}
 	
 	@Override
-	public ExperimentDescription getExperimentDescription(String experimentDescriptionID) throws Exception {
-		return (ExperimentDescription) stub.get(EXPERIMENT, experimentDescriptionID);
+	public ExperimentTemplate getExperimentDescription(String experimentDescriptionID) throws Exception {
+		return (ExperimentTemplate) stub.get(EXPERIMENT, experimentDescriptionID);
 	}
 
 	@Override
@@ -111,10 +106,25 @@ public class Stub implements POPRunnerInterface, Protocol {
 	}
 
 	@Override
-	public String startExperiment(String descriptionID) throws Exception {
-		return stub.start(descriptionID);
+	public String createExperiment(String descriptionID) throws Exception {
+		return stub.create(descriptionID);
+	}	
+	
+	@Override
+	public List<String> listWaitingExperiments() throws Exception {
+		return stub.list(WAITING);
 	}
 
+	@Override
+	public ExperimentInfo getWaitingExperiment(String experimentID) throws Exception {
+		return (ExperimentInfo) stub.get(WAITING, experimentID);
+	}
+	
+	@Override
+	public void startExperiment(String experimentID) throws Exception {
+		stub.start(experimentID);
+	}
+	
 	@Override
 	public void stopRunningExperiment(String experimentID) throws Exception {
 		stub.stop(experimentID);
@@ -144,4 +154,5 @@ public class Stub implements POPRunnerInterface, Protocol {
 	public void removeStoppedExperiment(String experimentID) throws Exception {
 		stub.remove(COMPLETED, experimentID);
 	}
+
 }

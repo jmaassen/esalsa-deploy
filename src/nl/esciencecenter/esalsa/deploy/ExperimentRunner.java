@@ -705,5 +705,22 @@ public class ExperimentRunner {
 		}
 		
 		return stateChanged;
+	}
+
+	@Override
+	public int hashCode() {
+		return info.ID.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ExperimentRunner other = (ExperimentRunner) obj;
+		return info.ID.equals(other.info.ID);
 	}	
 }

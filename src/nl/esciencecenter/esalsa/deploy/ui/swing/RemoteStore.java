@@ -81,6 +81,7 @@ public class RemoteStore<T extends StoreableObject> {
 		return true;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public T get(String ID) throws Exception { 
 		
 		if (ID == null) { 
@@ -96,6 +97,26 @@ public class RemoteStore<T extends StoreableObject> {
 		}
 		
 		return elt;
+	}
+
+	public void refresh() throws Exception {
+		
+		if (callback != null) { 
+			callback.clear();
+		}
+		
+		map.clear();
+		
+		List<String> keys = stub.list(stubKey);
+		
+		for (String s : keys) {
+			System.err.println("PUT " + s);
+			map.put(s, null);
+			
+			if (callback != null) { 
+				callback.add(s);
+			}
+		}
 	}	
 }
 	

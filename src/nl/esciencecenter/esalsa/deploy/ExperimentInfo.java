@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 public class ExperimentInfo extends StoreableObject implements Serializable {
 
@@ -79,12 +80,21 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		
 		inputFiles = inputs.getFilesAsArray();
 		
-		HashMap<String, String> tmp = worker.getMapping();
-
+		HashMap<String, String> tmp = new HashMap<String, String>();
+		
 		tmp.put("generated.runID", ID);
 		tmp.put("generated.log", ID + ".log");
 		tmp.put("generated.experimentDir", worker.experimentDir + File.separator + ID);
 		tmp.put("generated.outputDir", worker.outputDir + File.separator + ID);
+		
+		tmp.put("worker.inputDir", worker.inputDir);
+		tmp.put("worker.outputDir", worker.outputDir + File.separator + ID + File.separator);
+		tmp.put("worker.experimentDir", worker.experimentDir + File.separator + ID + File.separator);
+		tmp.put("worker.templateDir", worker.templateDir + File.separator);
+		
+		addWorkerProperties(tmp, worker.getMapping());
+		
+		System.out.println("Generated hashmap " + tmp);
 		
 		configuration = template.generate(tmp);
 
@@ -94,6 +104,12 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		this.log = "";
 	}
 
+	private void addWorkerProperties(HashMap<String, String> dest, HashMap<String, String> source) { 
+		for (Entry<String, String> e : source.entrySet()) { 
+			dest.put("worker." + e.getKey(), e.getValue());
+		}
+	}
+	
 	@Override
 	public String toString() {
 		return "Experiment: " + experimentDescriptionID + ", state =" + state + ", log:\n"

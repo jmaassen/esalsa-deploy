@@ -1,11 +1,13 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 
@@ -17,9 +19,8 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
-public class PropertyField extends EditorField {
-
-	private static final long serialVersionUID = -4458854688328569844L;
+@SuppressWarnings("serial")
+public class PropertyField extends BorderedEditorField {
 
 	private class Property { 
 	
@@ -53,6 +54,19 @@ public class PropertyField extends EditorField {
 			keyField.setText(key);
 			valueField.setText(value);
 		} 
+		
+		void setBackground(Color key, Color value) {
+			keyField.setBackground(key);
+			valueField.setBackground(value);
+		}
+		
+		void resetNormalBackGround() {
+			setBackground(NORMAL_COLOR, NORMAL_COLOR);
+		}
+		
+		void setErrorBackGround() {
+			setBackground(ERROR_COLOR, ERROR_COLOR);
+		}
 	} 
 	
 	public class Handler implements MouseListener {
@@ -178,7 +192,11 @@ public class PropertyField extends EditorField {
 		values.removeAll();
 		
 		properties.clear();
-		
+
+		if (value == null) { 
+			return;
+		}
+				
 		if (value instanceof HashMap) { 
 
 			// EEP!
@@ -196,10 +214,73 @@ public class PropertyField extends EditorField {
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public void clear() {
+		keys.removeAll();
+		values.removeAll();
+		properties.clear();
+		addProperty();
+	}
+
+	private boolean isEmpty(String s) { 
+		
+		if (s == null) { 
+			return true;
+		}
+		
+		if (s.trim().length() == 0) { 
+			return true;
+		}
+		
+		return false;		
+	}
 	
+	@Override
+	public boolean checkCorrectness() {
+
+		resetError();
+		
+		if (properties.size() == 0) { 
+			return true;
+		}
+		
+		boolean correct = true;
+		HashSet<String> keys = new HashSet<String>();
+		
+		for (Property f : properties) { 
+			
+			String key = f.getKey();
+			String value = f.getValue();
+
+			if (isEmpty(key) && !isEmpty(value)) { 
+				correct = false;
+				f.setBackground(ERROR_COLOR, NORMAL_COLOR);
+			}
+			
+			if (!isEmpty(key) && isEmpty(value)) { 
+				correct = false;
+				f.setBackground(NORMAL_COLOR, ERROR_COLOR);
+			}
+		
+			if (keys.contains(key)) { 
+				correct = false;
+				f.setBackground(ERROR_COLOR, NORMAL_COLOR);
+			}			
+		} 
+		
+		return correct;
+	}
 	
-	
+	@Override
+	public void resetError() {
+		
+		super.resetError();
+		
+		for (Property f : properties) { 
+			f.setBackground(NORMAL_COLOR, NORMAL_COLOR);
+		} 
+	}	
 }

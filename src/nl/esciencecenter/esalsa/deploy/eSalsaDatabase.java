@@ -20,6 +20,8 @@ public class eSalsaDatabase {
 	private static final String INPUTS_STORE                 = "inputs_store";
 	private static final String TEMPLATE_STORE               = "template_store";
 	private static final String EXPERIMENT_DESCRIPTION_STORE = "experiment_decription_store";
+	
+	private static final String WAITING_EXPERIMENT_STORE     = "waiting_experiment_store";
 	private static final String RUNNING_EXPERIMENT_STORE     = "running_experiment_store";
 	private static final String COMPLETED_EXPERIMENT_STORE   = "completed_experiment_store";
 	
@@ -31,13 +33,17 @@ public class eSalsaDatabase {
 	private Database inputsDb;
 	private Database templatesDb;
 	private Database experimentDescriptionDb;
+	
+	private Database waitingExperimentsDb;
 	private Database runningExperimentsDb;
 	private Database completedExperimentsDb;
 	
 	private Store<WorkerDescription> workerDescriptions;
 	private Store<FileSet> inputSets;
 	private Store<ConfigurationTemplate> configurationTemplates;
-	private Store<ExperimentDescription> experimentDescriptions;
+	private Store<ExperimentTemplate> experimentDescriptions;
+	
+	private Store<ExperimentInfo> waitingExperiments;
 	private Store<ExperimentInfo> runningExperiments;
 	private Store<ExperimentInfo> completedExperiments;
 	
@@ -69,6 +75,8 @@ public class eSalsaDatabase {
         inputsDb = env.openDatabase(null, INPUTS_STORE, dbConfig);
         templatesDb = env.openDatabase(null, TEMPLATE_STORE, dbConfig);
         experimentDescriptionDb = env.openDatabase(null, EXPERIMENT_DESCRIPTION_STORE, dbConfig);
+        
+        waitingExperimentsDb = env.openDatabase(null, WAITING_EXPERIMENT_STORE, dbConfig);
         runningExperimentsDb = env.openDatabase(null, RUNNING_EXPERIMENT_STORE, dbConfig);
         completedExperimentsDb = env.openDatabase(null, COMPLETED_EXPERIMENT_STORE, dbConfig);
         
@@ -81,7 +89,7 @@ public class eSalsaDatabase {
         EntryBinding<FileSet> inputsBinding = new SerialBinding<FileSet>(javaCatalog, FileSet.class);
         
         EntryBinding<ConfigurationTemplate> templatesBinding = new SerialBinding<ConfigurationTemplate>(javaCatalog, ConfigurationTemplate.class);
-        EntryBinding<ExperimentDescription> experimentsBinding = new SerialBinding<ExperimentDescription>(javaCatalog, ExperimentDescription.class);
+        EntryBinding<ExperimentTemplate> experimentsBinding = new SerialBinding<ExperimentTemplate>(javaCatalog, ExperimentTemplate.class);
         
         EntryBinding<ExperimentInfo> infoBinding = new SerialBinding<ExperimentInfo>(javaCatalog, ExperimentInfo.class);
                 
@@ -89,7 +97,9 @@ public class eSalsaDatabase {
         workerDescriptions = new Store<WorkerDescription>(workerDb, keyBinding, workerBinding, "Worker Description Store");
         inputSets = new Store<FileSet>(inputsDb, keyBinding, inputsBinding, "Input Set Store");
         configurationTemplates = new Store<ConfigurationTemplate>(templatesDb, keyBinding, templatesBinding, "Configuration Template Store");
-        experimentDescriptions = new Store<ExperimentDescription>(experimentDescriptionDb, keyBinding, experimentsBinding, "Experiment Description Store");	
+        experimentDescriptions = new Store<ExperimentTemplate>(experimentDescriptionDb, keyBinding, experimentsBinding, "Experiment Description Store");	
+        
+        waitingExperiments = new Store<ExperimentInfo>(waitingExperimentsDb, keyBinding, infoBinding, "Waiting Experiment Store");
         runningExperiments = new Store<ExperimentInfo>(runningExperimentsDb, keyBinding, infoBinding, "Running Experiment Store");
         completedExperiments = new Store<ExperimentInfo>(completedExperimentsDb, keyBinding, infoBinding, "Completed Experiment Store");
 	}
@@ -121,12 +131,16 @@ public class eSalsaDatabase {
 		return configurationTemplates;
 	}
 
-	public Store<ExperimentDescription> getExperimentDescriptions() {
+	public Store<ExperimentTemplate> getExperimentDescriptions() {
 		return experimentDescriptions;
 	}
 
 	public Store<ExperimentInfo> getRunningExperiments() {
 		return runningExperiments;
+	}
+	
+	public Store<ExperimentInfo> getWaitingExperiments() {
+		return waitingExperiments;
 	}
 	
 	public Store<ExperimentInfo> getCompletedExperiments() {

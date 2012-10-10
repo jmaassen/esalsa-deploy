@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
-import nl.esciencecenter.esalsa.deploy.ExperimentDescription;
+import nl.esciencecenter.esalsa.deploy.ExperimentTemplate;
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.POPRunnerInterface;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
@@ -74,7 +74,7 @@ public class Proxy implements Runnable, Protocol {
 			runner.addConfigurationTemplate((ConfigurationTemplate) param);
 			break;
 		case EXPERIMENT:
-			runner.addExperimentDescription((ExperimentDescription) param);
+			runner.addExperimentDescription((ExperimentTemplate) param);
 			break;
 		default:
 			throw new Exception("Illegal add of type " + type);
@@ -91,6 +91,8 @@ public class Proxy implements Runnable, Protocol {
 			return runner.getConfigurationTemplate(ID);
 		case EXPERIMENT:
 			return runner.getExperimentDescription(ID);
+		case WAITING:
+			return runner.getWaitingExperiment(ID);		
 		case RUNNING:
 			return runner.getRunningExperiment(ID);
 		case COMPLETED:
@@ -114,6 +116,7 @@ public class Proxy implements Runnable, Protocol {
 		case EXPERIMENT:
 			runner.removeExperimentDescription(ID);
 			break;
+		case WAITING:
 		case RUNNING:
 		case COMPLETED:
 		default:
@@ -131,6 +134,8 @@ public class Proxy implements Runnable, Protocol {
 			return runner.listConfigurationTemplates();
 		case EXPERIMENT:
 			return runner.listExperimentDescriptions();
+		case WAITING:
+			return runner.listWaitingExperiments();
 		case RUNNING:
 			return runner.listRunningExperiments();
 		case COMPLETED:
@@ -153,8 +158,11 @@ public class Proxy implements Runnable, Protocol {
 			return null;
 		case LIST:
 			return list(type);					
+		case CREATE:
+			return runner.createExperiment((String) param);
 		case START:
-			return runner.startExperiment((String) param);
+			runner.startExperiment((String) param);
+			return null;
 		case STOP:
 			runner.stopRunningExperiment((String) param);
 			return null;

@@ -25,13 +25,17 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 	
 	private Store<FileSet> inputs;
 	
-	private Store<ExperimentDescription> experimentDescriptions;
+	private Store<ExperimentTemplate> experimentDescriptions;
 
+	private Store<ExperimentInfo> waitingExperiments;
+	
 	private Store<ExperimentInfo> runningExperiments;
 	
 	private Store<ExperimentInfo> completedExperiments;
 	
 	private LinkedList<ExperimentRunner> experimentRunners = new LinkedList<ExperimentRunner>();
+	
+	private LinkedList<ExperimentRunner> finishedRunners = new LinkedList<ExperimentRunner>();
 	
 	// FIXME!!!
 	private static int counter = 0;
@@ -93,6 +97,8 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		
 		experimentDescriptions = db.getExperimentDescriptions();
 
+		waitingExperiments = db.getWaitingExperiments();
+		
 		runningExperiments = db.getRunningExperiments();
 		
 		completedExperiments = db.getCompletedExperiments();
@@ -245,7 +251,7 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 	/* Experiment Descriptions */
 
 	@Override
-	public void addExperimentDescription(ExperimentDescription exp) throws Exception { 
+	public void addExperimentDescription(ExperimentTemplate exp) throws Exception { 
 		experimentDescriptions.add(exp);
 	}
 
@@ -255,7 +261,7 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 	}
 
 	@Override
-	public ExperimentDescription getExperimentDescription(String ID) throws Exception { 
+	public ExperimentTemplate getExperimentDescription(String ID) throws Exception { 
 		return experimentDescriptions.get(ID);
 	}
 
@@ -264,27 +270,50 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		experimentDescriptions.remove(ID);
 	}
 	
-	/* Experiments */	
+	/* Experiments */
 	@Override
-	public String startExperiment(String ID) throws Exception {
-		
+	public String createExperiment(String ID) throws Exception {
+
 		if (ID == null || ID.length() == 0) { 
 			throw new IllegalArgumentException("Illegal ID!");
 		}
 		
-		ExperimentDescription exp = experimentDescriptions.get(ID);
+		ExperimentTemplate exp = experimentDescriptions.get(ID);
 		String runID = generateID(ID);
 	
 		WorkerDescription worker = workers.get(exp.worker);
 		FileSet input = inputs.get(exp.inputs); 
 		ConfigurationTemplate template = configurations.get(exp.configuration);
 		
-		ExperimentInfo info = new ExperimentInfo(ID, exp.ID, worker, input, template);
+		ExperimentInfo info = new ExperimentInfo(runID, exp.ID, worker, input, template);
+		waitingExperiments.add(info);
+		
+		return runID;
+	}
+	
+	@Override
+	public void startExperiment(String ID) throws Exception {
+		
+		if (ID == null || ID.length() == 0) { 
+			throw new IllegalArgumentException("Illegal ID!");
+		}
+		
+		ExperimentInfo info = waitingExperiments.get(ID);
 		runningExperiments.add(info);
+		waitingExperiments.remove(ID);
 		
 		ExperimentRunner e = new ExperimentRunner(info, this);
 		experimentRunners.add(e);
-		return runID;
+	}
+	
+	@Override
+	public List<String> listWaitingExperiments() throws Exception {
+		return waitingExperiments.getKeys();
+	}
+
+	@Override
+	public ExperimentInfo getWaitingExperiment(String experimentID) throws Exception {
+		return waitingExperiments.get(experimentID);
 	}
 
 	protected void finishedExperiment(ExperimentRunner experimentInstance) {
@@ -302,6 +331,8 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 			System.err.println("INTERNAL ERROR: Failed to remove experiment " + experimentInstance.getInfo().ID + " from running experiments database!");
 			e.printStackTrace();
 		}
+		
+		finishedRunners.add(experimentInstance);
 	}
 	
 	@Override
@@ -373,6 +404,16 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 					mustPrint = true;
 				} 
 			
+				// Cleanup finished experiments
+				if (finishedRunners.size() > 0) { 
+					
+					for (ExperimentRunner e : finishedRunners) { 
+						experimentRunners.remove(e);
+					}
+					
+					finishedRunners.clear();
+				}
+				
 			} else { 
 				if (mustPrint) { 
 					globalLogger.info("I am now idle...");

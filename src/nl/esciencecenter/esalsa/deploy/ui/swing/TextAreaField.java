@@ -1,16 +1,13 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.Dimension;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
-public class TextAreaField extends EditorField implements KeyListener {
+@SuppressWarnings("serial")
+public class TextAreaField extends BorderedEditorField {
 
-    private static final long serialVersionUID = 9123048071906291528L;
-	
     private final JTextPane textPane;
     
     public TextAreaField(String title, boolean editable) {
@@ -24,7 +21,8 @@ public class TextAreaField extends EditorField implements KeyListener {
     	textPane = new JTextPane();
     	textPane.setEditable(editable);
     	
-        textPane.addKeyListener(this);
+        //textPane.addKeyListener(this);
+        textPane.addMouseListener(this);
         
         JScrollPane scrollPane = new JScrollPane(textPane);
         
@@ -38,6 +36,13 @@ public class TextAreaField extends EditorField implements KeyListener {
 
     @Override
     public void setValue(Object value) {
+    	
+    	textPane.setText("");
+    	
+    	if (value == null) { 
+    		return;
+    	}
+    	
     	if (value instanceof String) { 
     		textPane.setText((String) value);
     	}
@@ -60,24 +65,13 @@ public class TextAreaField extends EditorField implements KeyListener {
 		return false;
 	}
 
-    @Override
-    public void setError(String message) {
-        // textPane.setText(text);
-    }
+	@Override
+	public void clear() {
+		textPane.setText("");    	
+	}
 
-    @Override
-    public void keyPressed(KeyEvent arg0) {
-    }
-
-    @Override
-    public void keyReleased(KeyEvent arg0) {
-//        informParent();
-    }
-
-    @Override
-    public void keyTyped(KeyEvent arg0) {
-
-    }
-
-  
+	@Override
+	public boolean checkCorrectness() {
+		return true;
+	}
 }

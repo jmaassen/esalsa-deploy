@@ -4,11 +4,10 @@ import java.awt.BorderLayout;
 
 import javax.swing.JTextField;
 
-public class TextLineField extends EditorField {
-
-    private static final long serialVersionUID = -3105825793218772947L;
+@SuppressWarnings("serial")
+public class TextLineField extends BorderedEditorField {
 	
-    private final JTextField textField;
+    protected final JTextField textField;
 
     public TextLineField(String title, boolean editable) {
     	this(title, title, false, editable);
@@ -19,6 +18,8 @@ public class TextLineField extends EditorField {
     	textField = new JTextField();
     	textField.setEditable(editable);
     	add(textField, BorderLayout.CENTER);
+    	
+    	textField.addMouseListener(this);
     }
 
 	@Override
@@ -27,7 +28,14 @@ public class TextLineField extends EditorField {
     }
 
 	@Override
-    public void setValue(Object value) {    	
+    public void setValue(Object value) {
+		
+		textField.setText("");
+		
+		if (value == null) { 
+			return;
+		}
+		
     	if (value instanceof String) { 
     		textField.setText((String) value);
     	} 
@@ -49,4 +57,14 @@ public class TextLineField extends EditorField {
 		
 		return false;
 	}
+
+	@Override
+	public void clear() {
+		textField.setText("");
+	}
+
+	@Override
+	public boolean checkCorrectness() {
+		return true;
+	}	
 }
