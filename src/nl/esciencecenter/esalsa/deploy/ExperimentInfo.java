@@ -3,6 +3,7 @@ package nl.esciencecenter.esalsa.deploy;
 import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -49,6 +50,9 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 	/** StopScript in experimentDir on target machine. */
 	public final URI stopScript; 
 	
+	/** POP log file in experimentDir on target machine. */
+	public final URI popLog; 
+	
 	/** The generated pop_in configuration file. */
 	public final String configuration;
 
@@ -74,6 +78,8 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		inputDir = worker.fileServer.resolve(worker.inputDir + File.separator);
 		templateDir = worker.fileServer.resolve(worker.templateDir + File.separator);
 
+		popLog = worker.fileServer.resolve(worker.experimentDir + File.separator + ID + File.separator + ID + ".log");
+		
 		startScript = experimentDir.resolve("start.sh");
 		monitorScript = experimentDir.resolve("monitor.sh");
 		stopScript = experimentDir.resolve("stop.sh");
@@ -94,7 +100,7 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		
 		addWorkerProperties(tmp, worker.getMapping());
 		
-		System.out.println("Generated hashmap " + tmp);
+		//System.out.println("Generated hashmap " + tmp);
 		
 		configuration = template.generate(tmp);
 
@@ -108,6 +114,53 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		for (Entry<String, String> e : source.entrySet()) { 
 			dest.put("worker." + e.getKey(), e.getValue());
 		}
+	}
+	
+	public void setState(String state) { 
+		this.state = state;
+	}
+	
+	private String format(int number, int pos) { 
+		
+		String tmp = "" + number;
+		
+		while (tmp.length() < pos) { 
+			tmp = "0" + tmp;
+		}
+
+		return tmp;
+	}
+	
+	private String getTimeStamp() { 
+		
+		Calendar c = Calendar.getInstance();
+		
+		StringBuilder b = new StringBuilder();
+		b.append(c.get(Calendar.YEAR));
+		b.append("-");
+		b.append(format(c.get(Calendar.MONTH), 2));
+		b.append("-");
+		b.append(format(c.get(Calendar.DAY_OF_MONTH), 2));
+		b.append(" ");
+		b.append(format(c.get(Calendar.HOUR_OF_DAY), 2));
+		b.append(":");
+		b.append(format(c.get(Calendar.MINUTE), 2));
+		b.append(":");
+		b.append(format(c.get(Calendar.SECOND), 2));
+		return b.toString();
+		
+	}
+	
+	public void info(String message) { 
+		log = log.concat(getTimeStamp() + " " + message + "\n");
+	}
+	
+	public void warn(String message, Throwable e) { 
+		log = log.concat(getTimeStamp() +" WARNING: " + message + "\n");
+	}
+
+	public void error(String message, Throwable e) { 
+		log = log.concat(getTimeStamp() +" ERROR: " + message + "\n");
 	}
 	
 	@Override

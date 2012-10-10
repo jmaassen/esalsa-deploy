@@ -130,7 +130,7 @@ public class DescriptionParser {
 		return new FileSet(ID, "This is a comment", files);		
 	}
 	
-	public static ConfigurationTemplate readConfigurationTemplate(String file) throws Exception { 
-		return new TemplateParser(new File(file)).parse();
+	public static ConfigurationTemplate readConfigurationTemplate(String file) throws Exception {
+		return new TemplateParser(new ConfigurationTemplate(file, ""), new File(file)).parse();
 	} 	
 }

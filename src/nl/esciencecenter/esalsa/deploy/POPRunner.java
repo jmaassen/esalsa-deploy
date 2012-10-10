@@ -392,7 +392,7 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 					try { 
 						boolean change = e.run();
 						
-						if (change) { 
+						if (change) {
 							runningExperiments.update(e.getInfo());
 						}
 						

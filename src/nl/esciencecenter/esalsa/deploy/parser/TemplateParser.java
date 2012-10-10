@@ -5,20 +5,28 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 
 import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
 
 public class TemplateParser {
 
-	private final File file; 
+	private final String sourceName;
 	private final 	BufferedReader in;
-		
-	private ConfigurationTemplate template;
-	private int lineNumber;
 	
-	public TemplateParser(File file) throws FileNotFoundException { 
-		this.file = file;
-		this.in = new BufferedReader(new FileReader(file)); 
+	private ConfigurationTemplate template;
+	private int lineNumber = 0;
+	
+	public TemplateParser(ConfigurationTemplate template, File file) throws FileNotFoundException {
+		this.template = template;
+		this.in = new BufferedReader(new FileReader(file));
+		sourceName = file.getName();
+	}
+	
+	public TemplateParser(ConfigurationTemplate template, String input) throws FileNotFoundException {
+		this.template = template;
+		sourceName = "user input";
+		this.in = new BufferedReader(new StringReader(input)); 
 	}
 	
 	private String readLine() throws IOException { 
@@ -52,17 +60,15 @@ public class TemplateParser {
 			return value.substring(start+2, end);
 		}
 
-		throw new Exception("Parse error at: " + file.getName() + ":" + lineNumber + ": illegal variable declaration in value: " + value);
+		throw new ParseException(sourceName, lineNumber, "Illegal variable declaration in value: " + value);
 	}
-	
-
-	
+		
 	private boolean readBlockField(ConfigurationTemplate.Block b) throws Exception { 
 	
 		String line = readLine(); 
 		
 		if (line == null) { 
-			throw new Exception("Parse error at: " + file.getName() + ":" + lineNumber + ": block " + b.name + " terminated unexpectedly!");
+			throw new ParseException(sourceName, lineNumber, "Block " + b.name + " terminated unexpectedly!");
 		}
 
 		if (line.startsWith("/")) { 
@@ -72,7 +78,7 @@ public class TemplateParser {
 		int index = line.lastIndexOf("=");
 		
 		if (index <= 0 || index == line.length()-1) { 
-			throw new Exception("Parse error at: " + file.getName() + ":" + lineNumber + ": block " + b.name + " expected \"key = value\".");
+			throw new ParseException(sourceName, lineNumber, "Expected key value pair!");
 		}
 
 		String key = line.substring(0,  index).trim();
@@ -98,7 +104,7 @@ public class TemplateParser {
 		}
 		
 		if (!line.startsWith("&")) { 
-			throw new Exception("Parse error at: " + file.getName() + ":" + lineNumber + ": line does not start with &"); 
+			throw new ParseException(sourceName, lineNumber, "Block does not start with &"); 
 		}
 		
 		ConfigurationTemplate.Block b = template.addBlock(line);
@@ -109,12 +115,7 @@ public class TemplateParser {
 	}
 	
 	public ConfigurationTemplate parse() throws Exception { 
-		
-		template = new ConfigurationTemplate(file.getName(), "This is a comment");
-		
 		while (readBlock());
-		
 		return template;
-	}
-	
+	}	
 }

@@ -10,10 +10,10 @@ import nl.esciencecenter.esalsa.deploy.StoreableObject;
 @SuppressWarnings("serial")
 public class StorePanel<T extends StoreableObject> extends JPanel {
 	
-    public StorePanel(RemoteStore<T> store, Viewer<T> viewer) {
+    public StorePanel(StoreListView<T> list, Viewer<T> viewer) {
     
         // Create a pane containing list to the left and editor to the right.
-    	StoreListView<T> list = new StoreListView<T>(store, viewer);
+    	//StoreListView<T> list = new StoreListView<T>(store, viewer);
 
         JSplitPane horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, list, viewer);
         horizontalSplitPane.setOneTouchExpandable(true);

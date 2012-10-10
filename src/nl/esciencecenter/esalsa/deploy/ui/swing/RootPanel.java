@@ -19,31 +19,24 @@ public class RootPanel extends JPanel {
 	private final JTabbedPane tabs;
 
 	private final RemoteStore<ExperimentTemplate> experimentStore;
-	private final Editor<ExperimentTemplate> experimentEditor;
 	private final StorePanel<ExperimentTemplate> experimentPanel;
 
 	private final RemoteStore<WorkerDescription> workerStore;
-	private final Editor<WorkerDescription> workerEditor;
 	private final StorePanel<WorkerDescription> workerPanel;
 
-	private final RemoteStore<FileSet> inputStore;
-	private final Editor<FileSet> inputEditor;
+	private final RemoteStore<FileSet> inputStore;	
 	private final StorePanel<FileSet> inputPanel;
 
 	private final RemoteStore<ConfigurationTemplate> configurationStore;
-	private final Editor<ConfigurationTemplate> configurationEditor;
 	private final StorePanel<ConfigurationTemplate> configurationPanel;
 
-	private final RemoteStore<ExperimentInfo> preparedStore;
-	private final Viewer<ExperimentInfo> preparedViewer;
-	private final StorePanel<ExperimentInfo> preparedPanel;
+	private final RemoteStore<ExperimentInfo> waitingStore;
+	private final StorePanel<ExperimentInfo> waitingPanel;
 
 	private final RemoteStore<ExperimentInfo> runningStore;
-	private final Viewer<ExperimentInfo> runningViewer;
 	private final StorePanel<ExperimentInfo> runningPanel;
 
 	private final RemoteStore<ExperimentInfo> completedStore;
-	private final Viewer<ExperimentInfo> completedViewer;
 	private final StorePanel<ExperimentInfo> completedPanel;
 	
 	private final SimpleStub stub;
@@ -56,32 +49,39 @@ public class RootPanel extends JPanel {
 		tabs = new JTabbedPane();
 		
 		workerStore = new RemoteStore<WorkerDescription>(stub, SimpleStub.getKey("worker"));
-		workerEditor = new WorkerEditor(this, stub, workerStore);
-		workerPanel = new StorePanel<WorkerDescription>(workerStore, workerEditor);
+		Editor<WorkerDescription> workerEditor = new WorkerEditor(this, stub, workerStore);
+		StoreListView<WorkerDescription> workerList = new StoreListView<WorkerDescription>(this, stub, workerStore, workerEditor, true);
+		workerPanel = new StorePanel<WorkerDescription>(workerList, workerEditor);
 
 		inputStore = new RemoteStore<FileSet>(stub, SimpleStub.getKey("inputs"));
-		inputEditor = new FileSetEditor(this, stub, inputStore);
-		inputPanel = new StorePanel<FileSet>(inputStore, inputEditor);
+		Editor<FileSet> inputEditor = new FileSetEditor(this, stub, inputStore);
+		StoreListView<FileSet> inputList = new StoreListView<FileSet>(this, stub, inputStore, inputEditor, true);		
+		inputPanel = new StorePanel<FileSet>(inputList, inputEditor);
 
 		configurationStore = new RemoteStore<ConfigurationTemplate>(stub, SimpleStub.getKey("configuration"));
-		configurationEditor = new ConfigurationEditor(this, stub, configurationStore);
-		configurationPanel = new StorePanel<ConfigurationTemplate>(configurationStore, configurationEditor);
+		Editor<ConfigurationTemplate> configurationEditor = new ConfigurationEditor(this, stub, configurationStore);
+		StoreListView<ConfigurationTemplate> configurationList = new StoreListView<ConfigurationTemplate>(this, stub, configurationStore, configurationEditor, true);		
+		configurationPanel = new StorePanel<ConfigurationTemplate>(configurationList, configurationEditor);
 
 		experimentStore = new RemoteStore<ExperimentTemplate>(stub, SimpleStub.getKey("experiment"));
-		experimentEditor = new ExperimentTemplateEditor(this, stub, experimentStore);
-		experimentPanel = new StorePanel<ExperimentTemplate>(experimentStore, experimentEditor);
+		Editor<ExperimentTemplate> experimentEditor = new ExperimentTemplateEditor(this, stub, experimentStore);
+		ExperimentTemplateList experimentList = new ExperimentTemplateList(this, stub, experimentStore, experimentEditor);		
+		experimentPanel = new StorePanel<ExperimentTemplate>(experimentList, experimentEditor);
 
-		preparedStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("waiting"));
-		preparedViewer = new WaitingExperimentViewer(this, stub, preparedStore);
-		preparedPanel = new StorePanel<ExperimentInfo>(preparedStore, preparedViewer);
+		waitingStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("waiting"));
+		ExperimentViewer waitingViewer = new ExperimentViewer(this, stub, waitingStore, false, false);
+		WaitingExperimentList waitingList = new WaitingExperimentList(this, stub, waitingStore, waitingViewer);		
+		waitingPanel = new StorePanel<ExperimentInfo>(waitingList, waitingViewer);
 		
 		runningStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("running"));
-		runningViewer = new RunningExperimentViewer(this, stub,  runningStore);
-		runningPanel = new StorePanel<ExperimentInfo>(runningStore, runningViewer);
-		
+		ExperimentViewer runningViewer = new ExperimentViewer(this, stub,  runningStore, true, true);
+		RunningExperimentList runningList = new RunningExperimentList(this, stub, runningStore, runningViewer);		
+		runningPanel = new StorePanel<ExperimentInfo>(runningList, runningViewer);
+
 		completedStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("completed"));
-		completedViewer = new ExperimentViewer(this, stub, completedStore);
-		completedPanel = new StorePanel<ExperimentInfo>(completedStore, completedViewer);
+		ExperimentViewer completedViewer = new ExperimentViewer(this, stub, completedStore, true, false);
+		StoreListView<ExperimentInfo> completedList = new StoreListView<ExperimentInfo>(this, stub, completedStore, completedViewer, true);		
+		completedPanel = new StorePanel<ExperimentInfo>(completedList, completedViewer);
 				
 		tabs.addTab("Workers", Utils.createImageIcon(
 				"images/computer.png", "Workers Tab"),
@@ -101,7 +101,7 @@ public class RootPanel extends JPanel {
 
 		tabs.addTab("Prepared", Utils.createImageIcon(
 				"images/control-pause.png", "Prepared Tab"),
-				preparedPanel);
+				waitingPanel);
 		
 		tabs.addTab("Running", Utils.createImageIcon(
 				"images/control.png", "Running Tab"),
@@ -126,7 +126,7 @@ public class RootPanel extends JPanel {
 			} else if (who.equals("experiment")) { 
 				experimentStore.refresh();
 			} else if (who.equals("waiting")) { 
-				preparedStore.refresh();
+				waitingStore.refresh();
 			} else if (who.equals("running")) { 
 				runningStore.refresh();
 			} else if (who.equals("completed")) { 
@@ -136,7 +136,7 @@ public class RootPanel extends JPanel {
 				inputStore.refresh();
 				configurationStore.refresh();
 				experimentStore.refresh();
-				preparedStore.refresh();
+				waitingStore.refresh();
 				runningStore.refresh();
 				completedStore.refresh();
 			}

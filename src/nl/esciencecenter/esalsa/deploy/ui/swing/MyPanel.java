@@ -23,12 +23,12 @@ public abstract class MyPanel<T extends StoreableObject> extends JPanel implemen
 	protected final SimpleStub stub;
 	protected final RootPanel parent;
 	
-	private final JPanel container;
+	protected final JPanel container;
 	private final JPanel buttonPanel;
 	
 	private final HashMap<String, ButtonHandler> buttonActions = new HashMap<String, ButtonHandler>();
 	
-	protected MyPanel(RootPanel parent, SimpleStub stub, RemoteStore<T> store, boolean editable) { 
+	protected MyPanel(RootPanel parent, SimpleStub stub, RemoteStore<T> store) { 
 		
 		super(new BorderLayout(SPACER, SPACER));
 		
@@ -83,7 +83,7 @@ public abstract class MyPanel<T extends StoreableObject> extends JPanel implemen
 		handler.clicked();		
 	}
 	
-	protected void showError(String message, Exception e) { 		
+	protected void showErrorMessage(String message, Exception e) { 		
 		System.err.println(message);
 		System.err.println(e.getLocalizedMessage());		
 		e.printStackTrace(System.err);

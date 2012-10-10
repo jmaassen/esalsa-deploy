@@ -3,15 +3,13 @@ package nl.esciencecenter.esalsa.deploy.ui.swing;
 import java.net.URI;
 import java.util.LinkedList;
 
-import javax.swing.JOptionPane;
-
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
 @SuppressWarnings("serial")
 public class FileSetEditor extends Editor<FileSet> {
 
-	public FileSetEditor(RootPanel parent, SimpleStub stub, RemoteStore<FileSet> store) { //, JobTableModel model) {
+	public FileSetEditor(RootPanel parent, SimpleStub stub, RemoteStore<FileSet> store) { 
 		super(parent, stub, store);
 		addField(new FileListField("Files"));
 	}
@@ -44,15 +42,12 @@ public class FileSetEditor extends Editor<FileSet> {
 		
 		String comment = (String) getElementValue("Comment");		
 		LinkedList<URI> files = (LinkedList<URI>) getElementValue("Files");
-		
 		FileSet f = new FileSet(ID, comment, files);
 		
 		try {
 			store.add(f);
 		} catch (Exception e) {
-			System.err.println("Failed to store file list! (" + e.getLocalizedMessage() + ")");
-			e.printStackTrace(System.err);
-			JOptionPane.showMessageDialog(this, "Failed to store file list! (" + e.getLocalizedMessage() + ")");			
+			showErrorMessage("Failed to store file list " + ID + "!", e);
 		}		
 	}
 }

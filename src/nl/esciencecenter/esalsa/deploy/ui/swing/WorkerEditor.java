@@ -69,7 +69,7 @@ public class WorkerEditor extends Editor<WorkerDescription> {
 		try {
 			store.add(w);
 		} catch (Exception e) {
-			showError("Failed to store worker!", e);
+			showErrorMessage("Failed to store worker!", e);
 		}
 	}
 }

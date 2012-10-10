@@ -4,28 +4,27 @@ import nl.esciencecenter.esalsa.deploy.ExperimentInfo;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
 @SuppressWarnings("serial")
-public class WaitingExperimentViewer extends ExperimentViewer {
-	
-	class StartHandler implements ButtonHandler {
+public class WaitingExperimentList extends StoreListView<ExperimentInfo> {
 
+	class StartHandler implements ButtonHandler {
 		@Override
 		public void clicked() {
 			start();
 		}		
 	}
 	
-	public WaitingExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store) { 
-		super(parent, stub, store);
-		addButton("Start", new StartHandler());
+	public WaitingExperimentList(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, Viewer<ExperimentInfo> viewer) {
+		super(parent, stub, store, viewer, true);
+		addButton("Start", new StartHandler());	
 	}
 	
 	private void start() { 
 		
 		System.out.println("Got Start");
 		
-		String ID = (String) getElementValue("ID");
-
-		if (ID == null || ID.trim().length() == 0) {
+		String ID = (String) list.getSelectedValue();
+		
+		if (ID == null) {
 			return;
 		}
 			
@@ -41,7 +40,7 @@ public class WaitingExperimentViewer extends ExperimentViewer {
 				stub.start(ID);
 				showMessage("Started experiment " + ID);
 			} catch (Exception e) {			
-				showError("Failed to start experiment " + ID + "!", e);			
+				showErrorMessage("Failed to start experiment " + ID + "!", e);			
 				return;
 			}
 
@@ -49,5 +48,5 @@ public class WaitingExperimentViewer extends ExperimentViewer {
 			parent.refresh("running");
 		}
 	}	
+	
 }
-

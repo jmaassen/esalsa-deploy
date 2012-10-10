@@ -4,7 +4,7 @@ import nl.esciencecenter.esalsa.deploy.ExperimentInfo;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
 @SuppressWarnings("serial")
-public class RunningExperimentViewer extends ExperimentViewer {
+public class RunningExperimentList extends StoreListView<ExperimentInfo> {
 
 	class StopHandler implements ButtonHandler {
 		@Override
@@ -13,8 +13,8 @@ public class RunningExperimentViewer extends ExperimentViewer {
 		}		
 	}
 	
-	public RunningExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store) { 
-		super(parent, stub, store);
+	public RunningExperimentList(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, Viewer<ExperimentInfo> viewer) { 
+		super(parent, stub, store, viewer, false);
 		addButton("Stop", new StopHandler());
 	}
 	
@@ -22,9 +22,9 @@ public class RunningExperimentViewer extends ExperimentViewer {
 		
 		System.out.println("Got Stop");
 		
-		String ID = (String) getElementValue("ID");
+		String ID = (String)  list.getSelectedValue();
 
-		if (ID == null || ID.trim().length() == 0) {
+		if (ID == null) {
 			return;
 		}
 			
@@ -39,7 +39,7 @@ public class RunningExperimentViewer extends ExperimentViewer {
 				stub.stop(ID);
 				showMessage("Stopped experiment " + ID);
 			} catch (Exception e) {			
-				showError("Failed to stop experiment " + ID + "!", e);			
+				showErrorMessage("Failed to stop experiment " + ID + "!", e);			
 				return;
 			}
 
@@ -47,5 +47,6 @@ public class RunningExperimentViewer extends ExperimentViewer {
 			parent.refresh("completed");
 		}
 	}
+	
 	
 }

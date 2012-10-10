@@ -53,7 +53,10 @@ public class ExperimentRunner {
 		
 	// Has the state changed during the last run ?
 	private boolean stateChanged = false;
-		
+
+	// Has the log changed during the last run ?
+	private boolean logChanged = false;
+	
 	// Time at which the last monitorJob call was done.
 	private long lastMonitorJob = 0;
 
@@ -73,7 +76,7 @@ public class ExperimentRunner {
 	private boolean mustStop = false;
 	
 	// Log describing the progress of the job;
-	private final StringBuilder log = new StringBuilder();
+	//private final StringBuilder log = new StringBuilder();
 	
 	public ExperimentRunner(ExperimentInfo info, POPRunner parent) throws Exception {
 		
@@ -109,24 +112,34 @@ public class ExperimentRunner {
 	}
 	
 	private void info(String message) { 
+		logChanged = true;
 		globalLogger.info("[" + info.ID + "] " + message);
+		info.info(message);
 	}
 	
-	private void warn(String message, Throwable e) { 
+	private void warn(String message, Throwable e) {
+		logChanged = true;
 		globalLogger.warn("[" + info.ID + "] " + message, e);
+		info.warn(message, e);
 	}
 
-	private void warn(String message) { 
-		globalLogger.warn("[" + info.ID + "] " + message);
+	private void warn(String message) {
+		logChanged = true;
+		warn(message, null);
 	}
 	
-	private void error(String message, Throwable e) { 
+	private void error(String message, Throwable e) {
+		logChanged = true;
 		globalLogger.error("[" + info.ID + "] " + message, e);
+		info.error(message, e);
+
 		setState(State.ERROR, message + " " + e.getMessage());
 	}
 	
-	private void error(String message) { 
+	private void error(String message) {
+		logChanged = true;
 		globalLogger.error("[" + info.ID + "] " + message);
+		info.error(message, null);
 		setState(State.ERROR, message);
 	}
 	
@@ -214,10 +227,8 @@ public class ExperimentRunner {
 			throw new Error("Illegal state transition: " + state + " -> " + nextState);
 		}
 		
-		if (log) {
-			this.log.append("Changed state to " + state.name() + ": " + message + "\n");
-			// EventLogger.get().log("[EXPERIMENT]", ID, nextState.name(), message);
-		}
+		info.setState(state.name());
+		info.info("Changed state to " + state.name() + ": " + message);		
 	}
 	
 	private void stageIn() { 
@@ -653,6 +664,7 @@ public class ExperimentRunner {
 	public boolean run() { 
 		
 		stateChanged = false;
+		logChanged = false;
 		
 		boolean stop = getMustStop();
 		
@@ -704,7 +716,7 @@ public class ExperimentRunner {
 			break;
 		}
 		
-		return stateChanged;
+		return stateChanged || logChanged;
 	}
 
 	@Override

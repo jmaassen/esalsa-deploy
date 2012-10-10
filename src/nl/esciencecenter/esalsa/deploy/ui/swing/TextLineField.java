@@ -1,6 +1,7 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 
 import javax.swing.JTextField;
 
@@ -17,9 +18,14 @@ public class TextLineField extends BorderedEditorField {
     	super(title, key, mayBeEmpty);
     	textField = new JTextField();
     	textField.setEditable(editable);
+    	textField.setBackground(Color.WHITE);    	
     	add(textField, BorderLayout.CENTER);
     	
     	textField.addMouseListener(this);
+    }
+    
+    public void setBackGround(Color color) { 
+    	textField.setBackground(color);
     }
 
 	@Override

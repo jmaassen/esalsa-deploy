@@ -25,10 +25,8 @@ public abstract class EditorField extends JPanel implements MouseListener {
 	}
     
 	public void mouseClicked(MouseEvent e) {
-    	System.out.println("Mouse clicked! AAAAA");
     	resetError();
     	System.out.println("Mouse clicked! BBBBB");
-        
 	}
 
 	@Override
