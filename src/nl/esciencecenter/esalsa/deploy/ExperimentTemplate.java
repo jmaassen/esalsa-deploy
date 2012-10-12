@@ -9,13 +9,17 @@ public class ExperimentTemplate extends StoreableObject implements Serializable 
 	public final String configuration;
 	public final String worker;
 	public final String inputs; 
+	public final int resubmits;
 	
-	public ExperimentTemplate(String ID, String configuration, String worker, String inputs, String comment) {
+	public ExperimentTemplate(String ID, String configuration, String worker, String inputs, int resubmits, String comment) {
 		
 		super(ID, comment);
 
 		this.configuration = configuration;
 		this.worker = worker;
-		this.inputs = inputs;		
+		this.inputs = inputs;
+		this.resubmits = resubmits;		
+		
+		System.out.println("Created Template " + ID + " " + configuration + " " + worker + " " + resubmits + " " + inputs + " " + comment);		
 	}
 }

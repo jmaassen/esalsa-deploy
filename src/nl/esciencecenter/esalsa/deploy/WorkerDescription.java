@@ -15,18 +15,16 @@ public class WorkerDescription extends StoreableObject {
 	public final String outputDir;
 	public final String experimentDir;
 	
-	/*
 	public final String startScript;
 	public final String stopScript;
 	public final String monitorScript;
-	*/
 	
 	private HashMap<String, String> values;  
 	
 	public WorkerDescription(String ID, 
 			URI jobServer, URI fileServer, 
-			String inputDir, String outputDir, 
-			String experimentDir, String templateDir,
+			String inputDir, String outputDir, String experimentDir, String templateDir,
+			String startScript, String monitorScript, String stopScript, 
 			String comment, 
 			HashMap<String, String> values) {
 		
@@ -40,11 +38,9 @@ public class WorkerDescription extends StoreableObject {
 		this.experimentDir = experimentDir;
 		this.templateDir = templateDir;
 		
-		/*
-		startScript = templateDir + File.separator + "start"; 
-		stopScript = templateDir + File.separator + "stop"; 
-		monitorScript = templateDir + File.separator + "monitor"; 
-		*/
+		this.startScript = startScript;
+		this.monitorScript = monitorScript;
+		this.stopScript = stopScript;
 		
 		this.values = values;
 	}

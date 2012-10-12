@@ -46,6 +46,8 @@ public abstract class Viewer<T extends StoreableObject> extends MyPanel<T> {
 	
 	protected void setElementValue(String key, Object value) { 
 		
+		System.out.println("Setting " + key + " = " + value);
+		
 		if (key == null) { 
 			return;
 		}

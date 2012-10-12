@@ -285,7 +285,7 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		FileSet input = inputs.get(exp.inputs); 
 		ConfigurationTemplate template = configurations.get(exp.configuration);
 		
-		ExperimentInfo info = new ExperimentInfo(runID, exp.ID, worker, input, template);
+		ExperimentInfo info = new ExperimentInfo(runID, exp.ID, exp.resubmits, worker, input, template);
 		waitingExperiments.add(info);
 		
 		return runID;

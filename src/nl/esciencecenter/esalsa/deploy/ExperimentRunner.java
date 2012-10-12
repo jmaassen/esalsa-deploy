@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 
 import nl.esciencecenter.esalsa.util.BulkFileTransferHandle;
 import nl.esciencecenter.esalsa.util.FileTransferDescription;
+import nl.esciencecenter.esalsa.util.FileTransferHandle;
 import nl.esciencecenter.esalsa.util.Utils;
 
 import org.slf4j.Logger;
@@ -21,9 +22,15 @@ public class ExperimentRunner {
 	// Global logger 
 	private static final Logger globalLogger = LoggerFactory.getLogger("eSalsa");
 	
-	// Minimum time to wait between calls to the monitor script.
-	private static final int MONITOR_SLEEP = 30; 
+	// Minimum time to wait between calls to the monitor script (in seconds).
+	private static final int MONITOR_SLEEP = 60;
 
+	// Maximum time to wait for a pop log file to be retrieved (in seconds).
+	private static final long MAXIMUM_LOG_RETRIEVAL_TIME = 10; 
+
+	// The message POP prints upon termination.
+	private static final String POP_TERMINATION_MESSAGE = "Successful completion of POP run";
+	
 	// The parent object;
 	private final POPRunner parent;
 
@@ -63,14 +70,11 @@ public class ExperimentRunner {
 	// Counter used to generate per-experiment-unique temp files.	
 	private int tempFileCounter = 0;
 		
-	// Current JobID of remote job	
-	private String jobID;
-	
 	// Local output directory for this experiment.	
 	private final File localOutputDir;
 
 	// Local copy of the (generated) configuration file.	
-	private final File localConfig;
+	private File localConfig;
 	
 	// Flag to stop this experiment when it is running
 	private boolean mustStop = false;
@@ -83,16 +87,20 @@ public class ExperimentRunner {
 		this.parent = parent;
 		this.info = info;
 		
-		localOutputDir = new File(parent.getTempDir() + File.separator + info.ID);
+		this.state = State.valueOf(info.getState());
 		
-		if (localOutputDir.exists()) { 
-			throw new Exception("Local temp dir already exists: " + localOutputDir);
-		}
-		
-		if (!localOutputDir.mkdirs()) { 
-			throw new Exception("Failed to create local temp dir: " + localOutputDir);
+		if (this.state != State.INITIAL) { 
+			info("Recovering job " + info.ID + ". Current state " + this.state);
 		}
 
+		localOutputDir = new File(parent.getTempDir() + File.separator + info.ID);
+		
+		if (localOutputDir.exists()) {
+			warn("Local temp dir already exists: " + localOutputDir);
+		} else if (!localOutputDir.mkdirs()) { 
+			throw new Exception("Failed to create local temp dir: " + localOutputDir);
+		}
+		
 		try {
 			localConfig = new File(localOutputDir + File.separator + "pop_in");			
 			BufferedWriter w = new BufferedWriter(new FileWriter(localConfig));
@@ -193,7 +201,7 @@ public class ExperimentRunner {
 			}
 			break;
 		case STOPPED:
-			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STAGE_OUT) { 
+			if (nextState == State.ERROR || nextState == State.STOPPED_BY_USER || nextState == State.STAGE_OUT || nextState == State.STAGE_IN_COMPLETE) { 
 				state = nextState;
 				stateChanged = true;
 			} else { 
@@ -236,7 +244,7 @@ public class ExperimentRunner {
 		
 		// First create the remote directories private to this experiment				
 		try { 
-			if (!Utils.createDir(info.experimentDir)) { 
+			if (!Utils.createDir(info.experimentDirURI)) { 
 				error("Failed to create remote experiment directory: " + info.experimentDir);
 				return;
 			}
@@ -247,7 +255,7 @@ public class ExperimentRunner {
 		
 		if (!info.experimentDir.equals(info.outputDir)) { 
 			try {
-				if (!Utils.createDir(info.outputDir)) { 
+				if (!Utils.createDir(info.outputDirURI)) { 
 					error("Failed to create remote output directory: " + info.outputDir);
 					return;
 				}
@@ -265,7 +273,7 @@ public class ExperimentRunner {
 		// Add all input files to the file transfer list 
 		try { 	
 			for (URI file : info.inputFiles) {
-				URI target = info.inputDir.resolve(Utils.getFileName(file));
+				URI target = info.inputDirURI.resolve(Utils.getFileName(file));
 				inputsTransfers.addLast(new FileTransferDescription(file, target));
 
 //				System.out.println("    " + file + " -> " + target);		
@@ -287,7 +295,7 @@ public class ExperimentRunner {
 			return;
 		}
 			
-		URI target = info.experimentDir.resolve("pop_in");
+		URI target = info.experimentDirURI.resolve("pop_in");
 		inputsTransfers.add(new FileTransferDescription(source, target));
 
 //System.out.println("    " + source + " -> " + target);		
@@ -298,7 +306,7 @@ public class ExperimentRunner {
 		
 		// Add the files in the remote experiment template dir.		
 		try {
-			Utils.createTransferList(info.templateDir, info.experimentDir, inputsTransfers);
+			Utils.createTransferList(info.templateDirURI, info.experimentDirURI, inputsTransfers);
 		} catch (Exception e1) {
 			error("Failed create transferlist for remote template directory", e1);
 			return;
@@ -346,17 +354,17 @@ public class ExperimentRunner {
 	
 		// Check if the essential files are present in the experiment directory, 
 		// as can be expected after the file transfer.
-		if (!Utils.accessibleFile(info.startScript)) { 
+		if (!Utils.accessibleFile(info.startScriptURI)) { 
 			error("Failed to find the remote start script: " + info.startScript);
 			return;
 		}
 
-		if (!Utils.accessibleFile(info.stopScript)) { 
+		if (!Utils.accessibleFile(info.stopScriptURI)) { 
 			error("Failed to find the remote stop script: " + info.stopScript);
 			return;
 		}
 
-		if (!Utils.accessibleFile(info.monitorScript)) { 
+		if (!Utils.accessibleFile(info.monitorScriptURI)) { 
 			error("Failed to find the remote monitor script: " + info.monitorScript);
 			return;
 		}
@@ -383,7 +391,7 @@ public class ExperimentRunner {
 		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
 		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
 		
-		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir.getPath(), "start.sh", 
+		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir, "start.sh", 
 				null, stdout, stderr, globalLogger, "[" + info.ID + "]");
 		
 		if (exit != 0) { 
@@ -433,8 +441,9 @@ public class ExperimentRunner {
 				return;
 			}
 	
-			jobID = tok.nextToken();
-			setState(State.SUBMITTED, jobID);		
+			String jobID = tok.nextToken();
+			info.setJobID(jobID);
+			setState(State.SUBMITTED, jobID);
 			info("Remote job submitted succesfully.");			
 			return;
 			
@@ -455,7 +464,14 @@ public class ExperimentRunner {
 		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
 		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
 		
-		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir.getPath(), 
+		String jobID = info.getJobID();
+		
+		if (jobID == null || jobID.length() == 0) { 
+			error("Failed to retrieve JOBID of experiment  "+ info.ID);
+			return;
+		}
+		
+		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir, 
 				"stop.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + info.ID + "]");
 		
 		if (exit != 0) { 
@@ -507,23 +523,19 @@ public class ExperimentRunner {
 		}
 	}
 
-	
-	private void monitorJob() { 
-		
-		long time = System.currentTimeMillis();
-		
-		if (time <= (lastMonitorJob + MONITOR_SLEEP*1000)) {
-			return;
-		}
-		
-		lastMonitorJob = time;
-		
-		String tmpName = getTempFileName("monitor", null);
-		
+	private void runMonitorScript(String tmpName) { 
+
 		File stdout = new File(localOutputDir + File.separator + tmpName + ".out");
 		File stderr = new File(localOutputDir + File.separator + tmpName + ".err");
 		
-		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir.getPath(), 
+		String jobID = info.getJobID();
+		
+		if (jobID == null || jobID.length() == 0) { 
+			error("Failed to retrieve JOBID of experiment  "+ info.ID);
+			return;
+		}
+		
+		int exit = Utils.runRemoteScript(info.jobServer, info.experimentDir, 
 				"monitor.sh", new String [] { jobID }, stdout, stderr, globalLogger, "[" + info.ID + "]");
 		
 		if (exit != 0) { 
@@ -633,6 +645,118 @@ public class ExperimentRunner {
 		error("Failed to parse output of monitor script: " + output);
 		return;
 	}
+
+	private void retrieveLog(String tmpName) { 
+		
+		File tmpFile = new File(localOutputDir + File.separator + tmpName + ".log");
+		
+		FileTransferDescription ft = null;
+		
+		try { 
+			ft = new FileTransferDescription(info.popLogURI, new URI("file://localhost/" + tmpFile.getAbsolutePath()));
+		} catch (Exception e) {
+			warn("Failed to create pop log URI for " + tmpFile.getAbsolutePath(), e);
+			return;
+		}
+			
+		FileTransferHandle handle = parent.fileTransferService.queue(ft);
+		
+		boolean done = handle.waitUntilDone(MAXIMUM_LOG_RETRIEVAL_TIME * 1000);
+		
+		if (!done) { 
+			handle.cancel();
+			warn("Failed to retrieve pop log " + info.popLogURI + " (timeout after " + MAXIMUM_LOG_RETRIEVAL_TIME + " sec.)");
+			return;
+		}
+		
+		Exception e = handle.getException();
+		
+		if (e != null) {
+			warn("Failed to retrieve pop log " + info.popLogURI + "!", e);
+			return;
+		} 
+		
+		try { 
+			StringBuffer tmp = Utils.readOutput(tmpFile, null);
+				
+			if (tmp != null) { 
+				info.setLogPOP(tmp.toString());
+			}				
+		} catch (Exception ex) {
+			error("Failed to read local copy of pop log " + tmpFile.getAbsolutePath() + "!", e);
+			return;
+		}
+	}
+	
+	private void monitorJob() { 
+		
+		long time = System.currentTimeMillis();
+		
+		if (time <= (lastMonitorJob + MONITOR_SLEEP*1000)) {
+			return;
+		}
+		
+		lastMonitorJob = time;
+		
+		String tmpName = getTempFileName("monitor", null);
+
+		runMonitorScript(tmpName);
+		retrieveLog(tmpName);
+	}
+	
+	private void moveLogFile() { 		
+		
+		URI from = info.popLogURI;
+		URI to = null;
+		
+		try { 
+			to = new URI(from.toString() + "." + info.getCurrentRun());
+		} catch (Exception e) {
+			warn("Failed to backup pop log file " + from, e);
+			return;
+		}
+		
+		try { 
+			
+			info("Copying pop log file from " + from + " to " + to);
+			
+			Utils.copy(from, to);
+		} catch (Exception e) {
+			warn("Failed to copy pop log file from " + from + " to " + to, e);
+		}
+	}
+	
+	private void stopped() {
+		// Once out job has stopped, we need to decide if we need to resubmit, stage out, or go to error stage. 
+		String popLog = info.getLogPOP();
+		
+		int index = popLog.indexOf(POP_TERMINATION_MESSAGE);
+		
+		if (index == -1) { 
+			// Apparently, POP did not terminate correctly, so we go to error state
+			error("POP run seems to have terminated with an error!");
+			return;
+		}
+		
+		moveLogFile();
+		
+		// POP terminated correctly. Check if we need to resubmit.
+		boolean ok = false;
+		
+		try { 
+			ok = info.incrementCurrentRunNumber();
+		} catch (Exception e) {
+			error("Failed to increment run number for POP resubmit!", e);
+			return;
+		}
+			
+		if (ok) {
+			setState(State.STAGE_IN_COMPLETE, "(RESUBMIT)");
+		} else { 
+			info("Maximum POP resubmits reached.");
+			stageOut();
+		}
+	}
 	
 	private void stageOut() {
 		warn("stageOut not implemented yet!");
@@ -701,7 +825,7 @@ public class ExperimentRunner {
 			}
 			break;
 		case STOPPED:
-			stageOut();
+			stopped();
 			break;
 		case STAGE_OUT:
 			monitorStageOut();

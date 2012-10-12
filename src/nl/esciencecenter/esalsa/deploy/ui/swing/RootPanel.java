@@ -69,17 +69,17 @@ public class RootPanel extends JPanel {
 		experimentPanel = new StorePanel<ExperimentTemplate>(experimentList, experimentEditor);
 
 		waitingStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("waiting"));
-		ExperimentViewer waitingViewer = new ExperimentViewer(this, stub, waitingStore, false, false);
+		ExperimentViewer waitingViewer = new ExperimentViewer(this, stub, waitingStore, false, false, false);
 		WaitingExperimentList waitingList = new WaitingExperimentList(this, stub, waitingStore, waitingViewer);		
 		waitingPanel = new StorePanel<ExperimentInfo>(waitingList, waitingViewer);
 		
 		runningStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("running"));
-		ExperimentViewer runningViewer = new ExperimentViewer(this, stub,  runningStore, true, true);
+		ExperimentViewer runningViewer = new ExperimentViewer(this, stub,  runningStore, true, true, true);
 		RunningExperimentList runningList = new RunningExperimentList(this, stub, runningStore, runningViewer);		
 		runningPanel = new StorePanel<ExperimentInfo>(runningList, runningViewer);
 
 		completedStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("completed"));
-		ExperimentViewer completedViewer = new ExperimentViewer(this, stub, completedStore, true, false);
+		ExperimentViewer completedViewer = new ExperimentViewer(this, stub, completedStore, true, false, true);
 		StoreListView<ExperimentInfo> completedList = new StoreListView<ExperimentInfo>(this, stub, completedStore, completedViewer, true);		
 		completedPanel = new StorePanel<ExperimentInfo>(completedList, completedViewer);
 				

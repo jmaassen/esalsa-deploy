@@ -24,21 +24,26 @@ public class DescriptionParser {
 	private static String WORKER_OUTPUTDIR = "outputDir";
 	private static String WORKER_TEMPLATEDIR = "templateDir";
 	private static String WORKER_EXPERIMENTDIR = "experimentDir";
+	private static String WORKER_STARTSCRIPT = "start.sh";
+	private static String WORKER_MONITORSCRIPT = "monitor.sh";
+	private static String WORKER_STOPSCRIPT = "stop.sh";
 	
 	private static String [] WORKER_FIELDS = new String [] { ID, WORKER_URI, WORKER_FILE_URI, WORKER_INPUTDIR, WORKER_OUTPUTDIR, WORKER_TEMPLATEDIR, WORKER_EXPERIMENTDIR };
 	
-	private static String getProperty(DeployProperties properties, String key, String description) throws Exception { 
+	private static String getProperty(DeployProperties properties, String key, String def, String description) throws Exception { 
 		
-		String tmp = properties.getProperty(key, null);
+		String tmp = properties.getProperty(key, def);
 		
 		if (tmp == null) {
 			throw new Exception("Missing or invalid field in " + description + ": " + key + " (fields found: " + properties.keySet() + ")");
 		}
 		
 		return tmp;
+	}		
+	
+	private static String getProperty(DeployProperties properties, String key, String description) throws Exception { 
+		return getProperty(properties, key, null, description);
 	}
-	
-	
 	
 	public static WorkerDescription readWorker(String file) throws Exception { 
 		
@@ -69,6 +74,11 @@ public class DescriptionParser {
 		String experimentDir = getProperty(p, WORKER_EXPERIMENTDIR, "WorkerDescription");
 		String templateDir = getProperty(p, WORKER_TEMPLATEDIR, "WorkerDescription");
 
+		String startScript = getProperty(p, WORKER_STARTSCRIPT, "start.sh", "WorkerDescription");
+		String monitorScript = getProperty(p, WORKER_MONITORSCRIPT, "monitor.sh", "WorkerDescription");
+		String stopScript = getProperty(p, WORKER_STOPSCRIPT, "stop.sh", "WorkerDescription");
+		
+		
 		HashMap<String, String> values = new HashMap<String, String>(); 
 		
 		for (Entry<Object, Object> entry : p.entrySet()) { 
@@ -94,7 +104,8 @@ public class DescriptionParser {
 			} 
 		}
 		
-		return new WorkerDescription(id, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, "This is a comment", values);
+		return new WorkerDescription(id, jobServer, fileServer, inputDir, outputDir, experimentDir, templateDir, 
+				startScript, monitorScript, stopScript, "No comment", values);
 	}
 	
 	public static ExperimentTemplate readExperimentDescription(String file) throws Exception { 
@@ -107,7 +118,9 @@ public class DescriptionParser {
 		String worker = getProperty(p, "worker", "ExperimentDescription");
 		String input = getProperty(p, "input", "ExperimentDescription");
 		
-		return new ExperimentTemplate(ID, config, worker, input, "This is a comment");
+		int resubmits = Integer.parseInt(getProperty(p, "resubmits", "1", "ExperimentDescription"));
+		
+		return new ExperimentTemplate(ID, config, worker, input, resubmits, "This is a comment");
 	}
 	
 	public static FileSet readFileSet(String file) throws IOException, URISyntaxException { 
@@ -131,6 +144,9 @@ public class DescriptionParser {
 	}
 	
 	public static ConfigurationTemplate readConfigurationTemplate(String file) throws Exception {
-		return new TemplateParser(new ConfigurationTemplate(file, ""), new File(file)).parse();
+		
+		File tmp = new File(file);
+		
+		return new TemplateParser(new ConfigurationTemplate(tmp.getName(), ""), tmp).parse();
 	} 	
 }

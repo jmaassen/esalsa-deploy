@@ -1,12 +1,5 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
-import java.awt.Dimension;
-
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
 import nl.esciencecenter.esalsa.deploy.ExperimentInfo;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
@@ -14,16 +7,23 @@ import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 public class ExperimentViewer extends Viewer<ExperimentInfo> {
 
 	private final boolean showLogs; 
-	
-	public ExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, boolean showLogs, boolean colapseDetails) { 	
+	private final boolean showPOPLog; 
+
+	public ExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, boolean showLogs, boolean colapseDetails, boolean showPOPLog) { 	
 		super(parent, stub, store, false);
 		
 		this.showLogs = showLogs;
+		this.showPOPLog = showPOPLog;
 		
 		addField(new TextLineField("State", false));
 
 		addField(new URIField("URI", false));
 
+		addField(new TextLineField("POP log file", false));
+
+		addField(new TextLineField("Submission Number", false));
+		
+/*		
 		if (colapseDetails) { 
 			CollapsiblePanel tmp = new CollapsiblePanel("Experiment Details");
 			
@@ -48,40 +48,45 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 			tmp.add(container);
 			formPanel.add(tmp);
 			
-		} else {  
-			addField(new URIField("Template Directory", false));
-			addField(new URIField("Experiment Directory", false));
-			addField(new URIField("Input Directory", false));
-			addField(new URIField("Output Directory", false));
+		} else {
+*/
+			addField(new TextLineField("Template Directory", false));
+			addField(new TextLineField("Experiment Directory", false));
+			addField(new TextLineField("Input Directory", false));
+			addField(new TextLineField("Output Directory", false));
 		
-			addField(new URIField("POP log file", false));
-		
-			addField(new URIField("Start Script", false));
-			addField(new URIField("Monitor Script", false));
-			addField(new URIField("Stop Script", false));
+			addField(new TextLineField("Start Script", false));
+			addField(new TextLineField("Monitor Script", false));
+			addField(new TextLineField("Stop Script", false));
 		
 			addField(new TextAreaField("Configuration", "Configuration", false, true,  true, -1, 15*Utils.defaultFieldHeight)); 
-		}
+//		}
 		
 		if (showLogs) { 
 			addField(new TextAreaField("Log", "Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
 		} 
+		
+		if (showPOPLog) { 
+			addField(new TextAreaField("POP Log", "POP Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
+		}
 	}
 
 	@Override
 	public void show(ExperimentInfo elt) {
 		setElementValue("ID", elt.ID);
 		setElementValue("Comment", elt.getComment());
-		setElementValue("State", elt.state);
+		setElementValue("State", elt.getState());
 		
 		setElementValue("URI", elt.jobServer);
+		
+		setElementValue("Submission Number", elt.getCurrentRun() + " of " + elt.totalRestarts);
 		
 		setElementValue("Template Directory", elt.templateDir);
 		setElementValue("Experiment Directory", elt.experimentDir);
 		setElementValue("Input Directory", elt.inputDir);
 		setElementValue("Output Directory", elt.outputDir);
 		
-		setElementValue("POP log file", elt.popLog);
+		setElementValue("POP log file", elt.popLogFile);
 		
 		setElementValue("Start Script", elt.startScript);
 		setElementValue("Monitor Script", elt.monitorScript);
@@ -90,7 +95,11 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 		setElementValue("Configuration", elt.configuration);
 		
 		if (showLogs) { 
-			setElementValue("Log", elt.log);
+			setElementValue("Log", elt.getDeployLog());
 		} 
+		
+		if (showPOPLog) { 
+			setElementValue("POP Log", elt.getLogPOP());
+		}
 	}	
 }

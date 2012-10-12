@@ -11,7 +11,8 @@ public class ExperimentTemplateEditor extends Editor<ExperimentTemplate> {
 
 		addField(new TextLineField("Worker", true));
 		addField(new TextLineField("Configuration", true));
-		addField(new TextLineField("Input", true));
+		addField(new TextLineField("Input", true));		
+		addField(new TextLineField("Resubmits", true));
 	}
 
 	@Override
@@ -20,7 +21,8 @@ public class ExperimentTemplateEditor extends Editor<ExperimentTemplate> {
 		setElementValue("Comment", exp.getComment());
 		setElementValue("Worker", exp.worker);
 		setElementValue("Configuration", exp.configuration);
-		setElementValue("Input", exp.inputs);		
+		setElementValue("Input", exp.inputs);				
+		setElementValue("Resubmits", "" + exp.resubmits);
 	}
 
 	@Override
@@ -42,7 +44,16 @@ public class ExperimentTemplateEditor extends Editor<ExperimentTemplate> {
 		String inputs = (String) getElementValue("Input");
 		String comment = (String) getElementValue("Comment");
 		
-		ExperimentTemplate e = new ExperimentTemplate(ID, configuration, worker, inputs, comment);
+		int resubmits = 1;
+		
+		try { 
+			resubmits = Integer.parseInt((String) getElementValue("Resubmits"));
+		} catch (Exception e) {
+			showError("Resubmits", "Invalid value!");
+			return;			
+		}
+		
+		ExperimentTemplate e = new ExperimentTemplate(ID, configuration, worker, inputs, resubmits, comment);
 		
 		try {
 			store.add(e);

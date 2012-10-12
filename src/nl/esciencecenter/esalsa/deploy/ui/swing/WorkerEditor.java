@@ -64,7 +64,7 @@ public class WorkerEditor extends Editor<WorkerDescription> {
 		
 		HashMap<String, String> values = (HashMap<String, String>) getElementValue("Additional Properties");
 		
-		WorkerDescription w = new WorkerDescription(ID, uri, uri, inputDir, outputDir, experimentDir, templateDir, comment, values);
+		WorkerDescription w = new WorkerDescription(ID, uri, uri, inputDir, outputDir, experimentDir, templateDir, "start.sh", "monitor.sh", "stop.sh", comment, values);
 	
 		try {
 			store.add(w);

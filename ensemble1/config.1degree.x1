@@ -10,7 +10,7 @@
 
 &io_nml
   num_iotasks = 1
-  lredirect_stdout = .false.
+  lredirect_stdout = .true.
   log_filename = '${generated.log}'
   luse_pointer_files = .true.
   pointer_filename = '${generated.experimentDir}/rpointer'
@@ -76,7 +76,7 @@
 /
 
 &restart_nml
-   restart_freq_opt = 'never' 
+   restart_freq_opt = 'nmonth' 
    restart_freq     = 1
    restart_outfile  = '${generated.outputDir}/pop_restart'
    restart_fmt      = 'nc'

@@ -23,91 +23,149 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 	/** The ID of the configuration template used to create this experiment */
 	public final String configurationTemplateID;
 	
+	/** The number of times pop needs to be restarted. */
+	public final int totalRestarts;
+	
 	/** The jobserver used to access the target machine */
 	public final URI jobServer;
 
+	/** The file server used to access the files on the target machine */
+	public final URI fileServer;
+	
 	/** The list of input files that must me copied to the target machine */
 	public final URI [] inputFiles;
-	
+
 	/** Input directory on target machine. */
-	public final URI inputDir; 
+	public final String inputDir; 
 
 	/** Template directory on target machine. */
-	public final URI templateDir; 
+	public final String templateDir; 
 	
 	/** Experiment directory on target machine. */
-	public final URI experimentDir; 
+	public final String experimentDir; 
 
 	/** Output directory on target machine. */
-	public final URI outputDir; 
-	
+	public final String outputDir; 
+
 	/** StartScript in experimentDir on target machine. */
-	public final URI startScript; 
+	public final String startScript; 
 	
 	/** MonitorScript in experimentDir on target machine. */
-	public final URI monitorScript; 
+	public final String monitorScript; 
 	
 	/** StopScript in experimentDir on target machine. */
-	public final URI stopScript; 
+	public final String stopScript; 
 	
-	/** POP log file in experimentDir on target machine. */
-	public final URI popLog; 
+	/** Name of pop log file in experimentDir on target machine. */
+	public final String popLogFile; 
 	
+	/** Input directory on target machine as URI. */
+	public final URI inputDirURI; 
+
+	/** Template directory on target machine as URI. */
+	public final URI templateDirURI; 
+	
+	/** Experiment directory on target machine as URI. */
+	public final URI experimentDirURI; 
+
+	/** Output directory on target machine as URI. */
+	public final URI outputDirURI; 
+	
+	/** StartScript in experimentDir on target machine as URI. */
+	public final URI startScriptURI; 
+	
+	/** MonitorScript in experimentDir on target machine as URI. */
+	public final URI monitorScriptURI; 
+	
+	/** StopScript in experimentDir on target machine as URI. */
+	public final URI stopScriptURI; 
+
 	/** The generated pop_in configuration file. */
 	public final String configuration;
-
+		
+	/** POP log file in experimentDir on target machine. */
+	public final URI popLogURI; 
+	
 	/** The last known state of the experiment */
-	public String state;
+	private String state;
 	
 	/** The log of the running experiment */
-	public String log;
+	private String logDeploy;
 	
-	public ExperimentInfo(String ID, String experimentDescriptionID, WorkerDescription worker, FileSet inputs, ConfigurationTemplate template) throws Exception {
+	/** The log of the total experiment */
+	private String logPOPTotal = "";
+	
+	/** The log of the currently running experiment */
+	private String logPOPcurrent;
+	
+	/** The current run number (1 .. totalRestarts) */
+	private int currentRun = 1;
+	
+	/** The current JOB ID generated pop_in configuration file. */
+	private String jobID;
+	
+	public ExperimentInfo(String ID, String experimentDescriptionID, int totalRestarts, 
+			WorkerDescription worker, FileSet inputs, ConfigurationTemplate template) throws Exception {
 	
 		super(ID, "Experiment generated from ExperimentDescription " + experimentDescriptionID);
 		
 		this.experimentDescriptionID = experimentDescriptionID;
+		this.totalRestarts = totalRestarts;
 		this.workerDescriptionID = worker.ID;
 		this.inputsID = inputs.ID;
 		this.configurationTemplateID = template.ID;
 
+		// Copy all relevant info from the worker.
 		jobServer = worker.jobServer;
+		fileServer = worker.fileServer;
 		
-		experimentDir = worker.fileServer.resolve(worker.experimentDir + File.separator + ID + File.separator);
-		outputDir = worker.fileServer.resolve(worker.outputDir + File.separator + ID + File.separator);
-		inputDir = worker.fileServer.resolve(worker.inputDir + File.separator);
-		templateDir = worker.fileServer.resolve(worker.templateDir + File.separator);
+		experimentDir = worker.experimentDir + File.separator + ID;
+		outputDir = worker.outputDir + File.separator + ID;
+		inputDir = worker.inputDir;
+		templateDir = worker.templateDir;
 
-		popLog = worker.fileServer.resolve(worker.experimentDir + File.separator + ID + File.separator + ID + ".log");
-		
-		startScript = experimentDir.resolve("start.sh");
-		monitorScript = experimentDir.resolve("monitor.sh");
-		stopScript = experimentDir.resolve("stop.sh");
-		
+		startScript = worker.startScript;
+		monitorScript = worker.monitorScript;
+		stopScript = worker.stopScript;
+
+		// Resolve the various URIs	
+		experimentDirURI = fileServer.resolve(experimentDir + File.separator);
+		outputDirURI = fileServer.resolve(outputDir + File.separator);
+		inputDirURI = fileServer.resolve(inputDir + File.separator);
+		templateDirURI = fileServer.resolve(templateDir + File.separator);
+
+		startScriptURI = experimentDirURI.resolve(startScript);
+		monitorScriptURI = experimentDirURI.resolve(monitorScript);
+		stopScriptURI = experimentDirURI.resolve(stopScript);
+
+		// Generate a name for the log produced by pop file.  	
+		popLogFile = ID + ".log";
+		popLogURI = fileServer.resolve(experimentDir + File.separator + popLogFile);
+
+		// Retrieve a list of input files.
 		inputFiles = inputs.getFilesAsArray();
-		
+
+		// Generate the configuration by expanding the variables in the template.
 		HashMap<String, String> tmp = new HashMap<String, String>();
 		
 		tmp.put("generated.runID", ID);
 		tmp.put("generated.log", ID + ".log");
-		tmp.put("generated.experimentDir", worker.experimentDir + File.separator + ID);
-		tmp.put("generated.outputDir", worker.outputDir + File.separator + ID);
 		
-		tmp.put("worker.inputDir", worker.inputDir);
-		tmp.put("worker.outputDir", worker.outputDir + File.separator + ID + File.separator);
-		tmp.put("worker.experimentDir", worker.experimentDir + File.separator + ID + File.separator);
-		tmp.put("worker.templateDir", worker.templateDir + File.separator);
+		tmp.put("generated.experimentDir", experimentDir);
+		tmp.put("generated.outputDir", outputDir);		
+		
+		tmp.put("worker.inputDir", inputDir);
+		
+		//tmp.put("worker.outputDir", worker.outputDir + File.separator + ID + File.separator);
+		//tmp.put("worker.experimentDir", worker.experimentDir + File.separator + ID + File.separator);
+		//tmp.put("worker.templateDir", worker.templateDir + File.separator);
 		
 		addWorkerProperties(tmp, worker.getMapping());
 		
-		//System.out.println("Generated hashmap " + tmp);
-		
 		configuration = template.generate(tmp);
 
-		// FIXME TODO check if config is correct here!
-		
 		this.state = "INITIAL";
-		this.log = "";
+		this.logDeploy = "";
 	}
 
 	private void addWorkerProperties(HashMap<String, String> dest, HashMap<String, String> source) { 
@@ -115,10 +173,25 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 			dest.put("worker." + e.getKey(), e.getValue());
 		}
 	}
-	
-	public void setState(String state) { 
-		this.state = state;
+
+	// FIXME? 
+	public boolean incrementCurrentRunNumber() throws Exception {
+		
+		if (currentRun < totalRestarts) {
+			
+			if (logPOPcurrent != null) { 
+				logPOPTotal = logPOPTotal.concat("\n------ LOG OF RUN " + currentRun + "------ \n"); 
+				logPOPTotal = logPOPTotal.concat(logPOPcurrent);
+			}
+
+			currentRun++;
+			logPOPcurrent = null;
+			return true;
+		} 
+		
+		return false;		
 	}
+
 	
 	private String format(int number, int pos) { 
 		
@@ -152,20 +225,70 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 	}
 	
 	public void info(String message) { 
-		log = log.concat(getTimeStamp() + " " + message + "\n");
+		logDeploy = logDeploy.concat(getTimeStamp() + " " + message + "\n");
 	}
 	
 	public void warn(String message, Throwable e) { 
-		log = log.concat(getTimeStamp() +" WARNING: " + message + "\n");
+		logDeploy = logDeploy.concat(getTimeStamp() +" WARNING: " + message + "\n");
 	}
 
 	public void error(String message, Throwable e) { 
-		log = log.concat(getTimeStamp() +" ERROR: " + message + "\n");
+		logDeploy = logDeploy.concat(getTimeStamp() +" ERROR: " + message + "\n");
 	}
+	
+	public void setLogPOP(String log) {
+		logPOPcurrent = "\n------ LOG OF RUN " + currentRun + "------ \n" + log;
+	}
+	
+	public String getLogPOP() {
+		
+		StringBuilder tmp = new StringBuilder("");
+		
+		if (logPOPTotal != null) { 
+			tmp.append(logPOPTotal);
+		}
+		
+		if (logPOPcurrent != null) { 
+			tmp.append(logPOPcurrent);
+		}
+		
+		return tmp.toString();		
+	}
+	
+	public void setJobID(String jobID) {
+		this.jobID = jobID;
+	}
+	
+	public String getJobID() {
+		return jobID;
+	}
+	
+	public String getState() {
+		return state;
+	}
+	
+	public void setState(String state) { 
+		this.state = state;
+	}	
 	
 	@Override
 	public String toString() {
 		return "Experiment: " + experimentDescriptionID + ", state =" + state + ", log:\n"
-				+ log + "\n\n";
+				+ logDeploy + "\n\n";
 	}
+
+	public URI getPOPLogURI() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public int getCurrentRun() {
+		return currentRun;
+	}
+
+	public String getDeployLog() {
+		return logDeploy;
+	}
+
+
 }

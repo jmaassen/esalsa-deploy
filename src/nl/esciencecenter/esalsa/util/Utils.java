@@ -351,6 +351,7 @@ public class Utils {
 			
 			while (line != null) { 
 				output.append(line);
+				output.append("\n");
 				line = in.readLine();
 			}
 			

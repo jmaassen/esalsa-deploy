@@ -68,7 +68,7 @@ public class GUI {
         
         UIManager.put("swing.boldMetal", Boolean.FALSE);
         frame = new JFrame("eSalsa Deploy");
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         ImageIcon icon = Utils.createImageIcon("images/favicon.ico", null);
      
