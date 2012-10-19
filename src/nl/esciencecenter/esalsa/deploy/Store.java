@@ -1,6 +1,8 @@
 package nl.esciencecenter.esalsa.deploy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -85,7 +87,7 @@ public class Store<T extends StoreableObject> {
 	public List<String> getKeys() {    
     	Set<String> tmp = map.keySet();
 		ArrayList<String> result = new ArrayList<String>(tmp.size());
-		result.addAll(tmp);		
+		result.addAll(tmp);	
 		return result;    	
     }
 }

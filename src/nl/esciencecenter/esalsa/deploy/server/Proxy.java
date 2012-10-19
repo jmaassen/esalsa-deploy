@@ -117,8 +117,12 @@ public class Proxy implements Runnable, Protocol {
 			runner.removeExperimentDescription(ID);
 			break;
 		case WAITING:
-		case RUNNING:
+			runner.removeWaitingExperiment(ID);
+			break;
 		case COMPLETED:
+			runner.removeStoppedExperiment(ID);
+			break;
+		case RUNNING:
 		default:
 			throw new Exception("Illegal remove of type " + type);
 		} 

@@ -7,21 +7,27 @@ import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 public class ExperimentViewer extends Viewer<ExperimentInfo> {
 
 	private final boolean showLogs; 
-	private final boolean showPOPLog; 
+	private final boolean showState;
 
-	public ExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, boolean showLogs, boolean colapseDetails, boolean showPOPLog) { 	
+	public ExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, boolean showLogs) { 	
 		super(parent, stub, store, false);
 		
 		this.showLogs = showLogs;
-		this.showPOPLog = showPOPLog;
+		this.showState = showLogs;
+
+		if (showState) { 
+			addField(new TextLineField("State", false));
+		}
 		
-		addField(new TextLineField("State", false));
-
 		addField(new URIField("URI", false));
-
+		
 		addField(new TextLineField("POP log file", false));
 
-		addField(new TextLineField("Submission Number", false));
+		addField(new TextLineField("Total job submissions", false));
+		
+		if (showState) { 
+			addField(new TextLineField("Current job submission", false));
+		}
 		
 /*		
 		if (colapseDetails) { 
@@ -64,9 +70,6 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 		
 		if (showLogs) { 
 			addField(new TextAreaField("Log", "Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
-		} 
-		
-		if (showPOPLog) { 
 			addField(new TextAreaField("POP Log", "POP Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
 		}
 	}
@@ -75,11 +78,10 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 	public void show(ExperimentInfo elt) {
 		setElementValue("ID", elt.ID);
 		setElementValue("Comment", elt.getComment());
-		setElementValue("State", elt.getState());
 		
 		setElementValue("URI", elt.jobServer);
-		
-		setElementValue("Submission Number", elt.getCurrentRun() + " of " + elt.totalRestarts);
+
+		setElementValue("Total job submissions", "" + elt.totalRestarts);
 		
 		setElementValue("Template Directory", elt.templateDir);
 		setElementValue("Experiment Directory", elt.experimentDir);
@@ -94,11 +96,13 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 		
 		setElementValue("Configuration", elt.configuration);
 		
+		if (showState) { 
+			setElementValue("State", elt.getState());
+			setElementValue("Current job submission", "" + elt.getCurrentRun());
+		}	
+		
 		if (showLogs) { 
 			setElementValue("Log", elt.getDeployLog());
-		} 
-		
-		if (showPOPLog) { 
 			setElementValue("POP Log", elt.getLogPOP());
 		}
 	}	

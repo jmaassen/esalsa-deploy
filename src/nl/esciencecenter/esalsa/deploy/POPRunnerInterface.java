@@ -31,6 +31,7 @@ public interface POPRunnerInterface {
 	// Waiting experiments
 	public String createExperiment(String descriptionID) throws Exception;
 	public void startExperiment(String experimentID) throws Exception;
+	public void removeWaitingExperiment(String experimentID) throws Exception;	
 	public List<String> listWaitingExperiments() throws Exception;
 	public ExperimentInfo getWaitingExperiment(String experimentID) throws Exception;
 	

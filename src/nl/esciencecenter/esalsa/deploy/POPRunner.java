@@ -146,7 +146,7 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		StringBuilder b = new StringBuilder(baseID);
 		b.append(".");
 		b.append(c.get(Calendar.YEAR));
-		b.append(format(c.get(Calendar.MONTH), 2));
+		b.append(format(c.get(Calendar.MONTH)+1, 2));
 		b.append(format(c.get(Calendar.DAY_OF_MONTH), 2));
 		b.append(".");
 		b.append(format(c.get(Calendar.HOUR_OF_DAY), 2));
@@ -311,6 +311,11 @@ public class POPRunner implements POPRunnerInterface, Runnable {
 		return waitingExperiments.getKeys();
 	}
 
+	@Override
+	public void removeWaitingExperiment(String experimentID) throws Exception { 
+		waitingExperiments.remove(experimentID);
+	}
+	
 	@Override
 	public ExperimentInfo getWaitingExperiment(String experimentID) throws Exception {
 		return waitingExperiments.get(experimentID);

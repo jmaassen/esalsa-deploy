@@ -1,8 +1,10 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.Collections;
 
-import javax.swing.DefaultListModel;
+import javax.swing.AbstractListModel;
 import javax.swing.JList;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -12,10 +14,10 @@ import nl.esciencecenter.esalsa.deploy.StoreableObject;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
 @SuppressWarnings("serial")
-public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implements StoreCallback, ListSelectionListener {
+public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implements ListSelectionListener {
 	
 	protected JList list;
-	private DefaultListModel listModel;
+//	private DefaultListModel listModel;
 	
 	private Viewer<T> viewer;
 	
@@ -33,23 +35,75 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 		}		
 	}
 	
+	class StoreListModel extends AbstractListModel implements StoreCallback {
+
+		private ArrayList<String> cache = new ArrayList<String>();
+		//private RemoteStore<T> store;
+		
+		StoreListModel(RemoteStore<T> store) { 
+			//this.store = store;
+			store.addCallBack(this);
+		}
+	
+		@Override
+		public void add(String item) {
+			if (item != null && item.length() > 0) {
+				cache.add(item);
+				Collections.sort(cache);
+				fireContentsChanged(this, 0, cache.size());
+			} 				
+		}
+
+		@Override
+		public void remove(String item) {
+			if (item != null && item.length() > 0) {
+				cache.remove(item);
+				Collections.sort(cache);
+				fireContentsChanged(this, 0, cache.size());
+			} 		
+		}
+
+		@Override
+		public void clear() {
+			cache.clear();
+			fireContentsChanged(this, 0, cache.size());
+		}
+		
+		@Override
+		public Object getElementAt(int index) {
+			
+			if (index < 0 || index >= cache.size()) { 
+				return null;
+			}
+			
+			return cache.get(index);
+		}
+
+		@Override
+		public int getSize() {
+			return cache.size();
+		} 		
+	}
+	
 	public StoreListView(RootPanel parent, SimpleStub stub, RemoteStore<T> store, Viewer<T> viewer, boolean allowDelete) { 
 
 		super(parent, stub, store);
 
 		this.viewer = viewer;
 		
-		listModel = new DefaultListModel();
-		list = new JList(listModel);
+		//listModel = new DefaultListModel();
+		//list = new JList(listModel);
 		
+		list = new JList(new StoreListModel(store));
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	    list.setSelectedIndex(0);
 	    list.addListSelectionListener(this);
 	    list.setVisibleRowCount(5);
-		
+	    list.clearSelection();
+	    
 	    container.add(list, BorderLayout.NORTH);
 		
-		store.addCallBack(this);
+	    //store.addCallBack(this);
 		
 		addButton("Refresh", new RefreshHandler());
 		
@@ -58,31 +112,15 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 		}
 	}
 
-	@Override
-	public void add(String item) {
-		if (item != null && item.length() > 0) { 
-			listModel.addElement(item);
-		} 
-	}
-
-	@Override
-	public void remove(String item) {
-		if (item != null && item.length() > 0) { 
-			listModel.removeElement(item);
-		} 		
-	}
-
-	@Override
-	public void clear() {
-		listModel.removeAllElements();
-	}
-	
+		
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 
 	    if (e.getValueIsAdjusting() == false) {
-
+	    	
 	    	String value = (String) list.getSelectedValue();
+	    	
+	    	System.out.println("Got valueChanged " + value);
 	    	
 	    	if (value != null) { 
 	    		viewer.show(value);
@@ -91,10 +129,10 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 	}
 
 	private void delete() { 
-		
-		System.out.println("Got Delete");
 
 		String id = (String) list.getSelectedValue();
+
+		System.out.println("Got Delete " + id);
 		
 		if (id == null) { 
 			return;
@@ -113,12 +151,27 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 				return;
 			}
 			
+			list.clearSelection();			
 			viewer.clear();	
 		}
 	}
 	
-	private void refresh() { 
-		System.out.println("Got refresh");
+	private void refresh() {
+		
+		String value = (String) list.getSelectedValue();
+	    
+		System.out.println("Got refresh " + value);
+		
 		parent.refresh("all");
+		
+		if (value != null) { 
+		
+			if (store.contains(value)) { 
+				list.setSelectedValue(value, true);
+				viewer.show(value);
+			} else { 
+				list.clearSelection();
+			}
+		}
 	}
 }

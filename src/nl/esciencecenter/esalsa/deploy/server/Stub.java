@@ -121,6 +121,11 @@ public class Stub implements POPRunnerInterface, Protocol {
 	}
 	
 	@Override
+	public void removeWaitingExperiment(String experimentID) throws Exception {
+		stub.remove(WAITING, experimentID);
+	}
+	
+	@Override
 	public void startExperiment(String experimentID) throws Exception {
 		stub.start(experimentID);
 	}
