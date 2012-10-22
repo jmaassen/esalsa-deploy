@@ -8,12 +8,46 @@ import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 @SuppressWarnings("serial")
 public class ConfigurationEditor extends Editor<ConfigurationTemplate> {
 	
-	private TextAreaField configuration;
+	private TextLineFieldWithButton configuration;
 	
-	public ConfigurationEditor(RootPanel parent, SimpleStub stub, RemoteStore<ConfigurationTemplate> store) { //, JobTableModel model) {
+	class Parser implements EditorListener {
+
+		@Override
+		public void parse(String text) throws ParseException {
+			
+			try { 
+				new TemplateParser(new ConfigurationTemplate("dummy", "dummy"), text).parse();
+			} catch (ParseException e1) {
+				throw e1;
+			} catch (Exception e2) { 
+				throw new ParseException("(unknown)", 1, "Failed to parse configuration!");
+			}
+		}
+
+		@Override
+		public void startedEditing() {
+			disableParent();
+		}
+
+		@Override
+		public void stoppedEditing() {
+			enableParent();
+		} 
+	}
+	
+	public ConfigurationEditor(RootPanel parent, SimpleStub stub, RemoteStore<ConfigurationTemplate> store) { 
 		super(parent, stub, store);
-		configuration = new TextAreaField("Configuration", "Configuration", false, true,  true, -1, 15*Utils.defaultFieldHeight); 
+
+		configuration = new TextLineFieldWithButton("Configuration", "pop_in_template", "edit", false, true, new Parser());
 		addField(configuration);
+	}
+	
+	private void disableParent() { 
+		parent.disableMe();
+	}
+	
+	private void enableParent() { 
+		parent.enableMe();
 	}
 
 	@Override
@@ -21,17 +55,11 @@ public class ConfigurationEditor extends Editor<ConfigurationTemplate> {
 		setElementValue("ID", elt.ID);
 		setElementValue("Comment", elt.getComment());
 		setElementValue("Configuration", elt.toString());
+		configuration.setLine("pop_in_template");
 	}
 
 	private void showParseError(int line, String message) { 
-		
-		System.out.println("Got parse error on line " + line + " : " + message);
-		
 		showError("Configuration", "Error on line " + line + ": " + message);
-		
-		configuration.setErrorLine(line);
-		
-		
 	}
 	
 	@Override

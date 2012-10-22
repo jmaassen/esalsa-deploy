@@ -43,7 +43,4 @@ public abstract class BorderedEditorField extends EditorField {
     	System.out.println("Reset error!");
     	
     }
-
-	
-	
 }

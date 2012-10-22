@@ -178,4 +178,19 @@ public class TextAreaField extends BorderedEditorField implements DocumentListen
 	public boolean checkCorrectness() {
 		return true;
 	}
+	
+	
+	public void setEnabled(boolean value) { 
+		
+		System.out.println("TextAreaField setEnables(" + value + ")");
+		
+		super.setEnabled(value);
+
+		if (lines != null) { 
+			lines.setEnabled(value);
+		} 
+		textArea.setEnabled(value);
+	}
+
+	
 }

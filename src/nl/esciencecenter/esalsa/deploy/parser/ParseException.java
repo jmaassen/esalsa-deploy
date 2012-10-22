@@ -7,13 +7,13 @@ public class ParseException extends Exception {
 	private final String source;
 	private final int line;
 	
-	ParseException(String source, int line, String message) { 
+	public ParseException(String source, int line, String message) { 
 		super(message);
 		this.line = line;
 		this.source = source;
 	}
 	
-	ParseException(String source, int line, String message, Throwable cause) { 
+	public ParseException(String source, int line, String message, Throwable cause) { 
 		super(message, cause);
 		this.line = line;
 		this.source = source;

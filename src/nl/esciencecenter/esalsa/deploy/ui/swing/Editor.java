@@ -54,7 +54,7 @@ public abstract class Editor<T extends StoreableObject> extends Viewer<T> implem
 	
 	public boolean checkForCorrectness() { 
 		
-		System.out.println("Editor.checkForCorrectness()");
+		//System.out.println("Editor.checkForCorrectness()");
 		
 		boolean result = true;
 		
@@ -64,7 +64,7 @@ public abstract class Editor<T extends StoreableObject> extends Viewer<T> implem
 			} 
 		}
 		
-		System.out.println("Editor.checkForCorrectness() result = " + result);
+		//System.out.println("Editor.checkForCorrectness() result = " + result);
 		
 		return result;		
 	}

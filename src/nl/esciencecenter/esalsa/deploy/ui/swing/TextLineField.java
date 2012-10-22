@@ -73,4 +73,12 @@ public class TextLineField extends BorderedEditorField {
 	public boolean checkCorrectness() {
 		return true;
 	}	
+
+	public void setEnabled(boolean value) { 
+		
+		System.out.println("TextLineField setEnables(" + value + ")");
+		
+		super.setEnabled(value);
+		textField.setEnabled(value);
+	}
 }

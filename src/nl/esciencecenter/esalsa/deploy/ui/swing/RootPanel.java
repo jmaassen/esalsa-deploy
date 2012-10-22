@@ -1,6 +1,7 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -51,36 +52,43 @@ public class RootPanel extends JPanel {
 		workerStore = new RemoteStore<WorkerDescription>(stub, SimpleStub.getKey("worker"));
 		Editor<WorkerDescription> workerEditor = new WorkerEditor(this, stub, workerStore);
 		StoreListView<WorkerDescription> workerList = new StoreListView<WorkerDescription>(this, stub, workerStore, workerEditor, true);
+		workerEditor.setViewer(workerList);
 		workerPanel = new StorePanel<WorkerDescription>(workerList, workerEditor);
 
 		inputStore = new RemoteStore<FileSet>(stub, SimpleStub.getKey("inputs"));
 		Editor<FileSet> inputEditor = new FileSetEditor(this, stub, inputStore);
 		StoreListView<FileSet> inputList = new StoreListView<FileSet>(this, stub, inputStore, inputEditor, true);		
+		inputEditor.setViewer(inputList);
 		inputPanel = new StorePanel<FileSet>(inputList, inputEditor);
 
 		configurationStore = new RemoteStore<ConfigurationTemplate>(stub, SimpleStub.getKey("configuration"));
 		Editor<ConfigurationTemplate> configurationEditor = new ConfigurationEditor(this, stub, configurationStore);
-		StoreListView<ConfigurationTemplate> configurationList = new StoreListView<ConfigurationTemplate>(this, stub, configurationStore, configurationEditor, true);		
+		StoreListView<ConfigurationTemplate> configurationList = new StoreListView<ConfigurationTemplate>(this, stub, configurationStore, configurationEditor, true);
+		configurationEditor.setViewer(configurationList);
 		configurationPanel = new StorePanel<ConfigurationTemplate>(configurationList, configurationEditor);
 
 		experimentStore = new RemoteStore<ExperimentTemplate>(stub, SimpleStub.getKey("experiment"));
 		Editor<ExperimentTemplate> experimentEditor = new ExperimentTemplateEditor(this, stub, experimentStore);
-		ExperimentTemplateList experimentList = new ExperimentTemplateList(this, stub, experimentStore, experimentEditor);		
+		ExperimentTemplateList experimentList = new ExperimentTemplateList(this, stub, experimentStore, experimentEditor);
+		experimentEditor.setViewer(experimentList);
 		experimentPanel = new StorePanel<ExperimentTemplate>(experimentList, experimentEditor);
 
 		preparedStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("waiting"));
 		ExperimentViewer waitingViewer = new ExperimentViewer(this, stub, preparedStore, false);
-		WaitingExperimentList waitingList = new WaitingExperimentList(this, stub, preparedStore, waitingViewer);		
+		WaitingExperimentList waitingList = new WaitingExperimentList(this, stub, preparedStore, waitingViewer);
+		waitingViewer.setViewer(waitingList);
 		preparedPanel = new StorePanel<ExperimentInfo>(waitingList, waitingViewer);
 		
 		runningStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("running"));
 		ExperimentViewer runningViewer = new ExperimentViewer(this, stub,  runningStore, true);
-		RunningExperimentList runningList = new RunningExperimentList(this, stub, runningStore, runningViewer);		
+		RunningExperimentList runningList = new RunningExperimentList(this, stub, runningStore, runningViewer);
+		runningViewer.setViewer(runningList);
 		runningPanel = new StorePanel<ExperimentInfo>(runningList, runningViewer);
 
 		completedStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("completed"));
-		ExperimentViewer completedViewer = new ExperimentViewer(this, stub, completedStore, true);
-		StoreListView<ExperimentInfo> completedList = new StoreListView<ExperimentInfo>(this, stub, completedStore, completedViewer, true);		
+		ExperimentViewer completedViewer = new ExperimentViewer(this, stub, completedStore, true);		
+		StoreListView<ExperimentInfo> completedList = new StoreListView<ExperimentInfo>(this, stub, completedStore, completedViewer, true);
+		completedViewer.setViewer(completedList);
 		completedPanel = new StorePanel<ExperimentInfo>(completedList, completedViewer);
 				
 		tabs.addTab("Workers", Utils.createImageIcon(
@@ -113,6 +121,55 @@ public class RootPanel extends JPanel {
 
 		add(tabs, BorderLayout.CENTER);
 	}
+	
+	public void setEnabled(boolean value) { 
+		
+		System.out.println("RootPanel setEnables(" + value + ")");
+		
+		super.setEnabled(value);
+		
+		tabs.setEnabled(value);
+		
+		experimentPanel.setEnabled(value);
+		workerPanel.setEnabled(value);
+		inputPanel.setEnabled(value);
+		configurationPanel.setEnabled(value);
+		preparedPanel.setEnabled(value);
+		runningPanel.setEnabled(value);
+		completedPanel.setEnabled(value);
+	}
+
+	
+	
+	protected void disableMe() { 	
+		setEnabled(false);
+	}
+		
+		/*
+		setEnabled(false);
+		
+		experimentPanel.disableMe();
+		workerPanel.disableMe();
+		inputPanel.disableMe();
+		configurationPanel.disableMe();
+		preparedPanel.disableMe();
+		runningPanel.disableMe();
+		completedPanel.disableMe();	
+	}*/
+	
+	protected void enableMe() {
+		setEnabled(true);
+	}
+	
+	/*
+		experimentPanel.enableMe();
+		workerPanel.enableMe();
+		inputPanel.enableMe();
+		configurationPanel.enableMe();
+		preparedPanel.enableMe();
+		runningPanel.enableMe();
+		completedPanel.enableMe();
+	}*/
 	
 	protected void refresh(String who) { 
 		

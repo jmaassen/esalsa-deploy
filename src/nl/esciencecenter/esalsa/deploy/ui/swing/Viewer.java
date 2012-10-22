@@ -1,6 +1,7 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.util.LinkedHashMap;
 
@@ -13,11 +14,13 @@ import nl.esciencecenter.esalsa.deploy.StoreableObject;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
 @SuppressWarnings("serial")
-public abstract class Viewer<T extends StoreableObject> extends MyPanel<T> {
+public abstract class Viewer<T extends StoreableObject> extends MyStorePanel<T> {
 
 	protected final JPanel formPanel;
 	protected LinkedHashMap<String, EditorField> elements = new LinkedHashMap<String, EditorField>();
 
+	protected StoreListView<T> listView;
+	
 	protected Viewer(RootPanel parent, SimpleStub stub, RemoteStore<T> store, boolean editable) { 
 		
 		super(parent, stub, store);
@@ -33,6 +36,10 @@ public abstract class Viewer<T extends StoreableObject> extends MyPanel<T> {
 		container.add(formPanel, BorderLayout.NORTH);
 	}
 
+	protected void setViewer(StoreListView<T> viewer) {
+		this.listView = viewer;
+	}
+	
 	protected void addField(EditorField elt) {
 		
 		if (elt == null) { 
@@ -78,6 +85,10 @@ public abstract class Viewer<T extends StoreableObject> extends MyPanel<T> {
 	
 	protected void clear() {
 		
+		if (listView != null) { 
+			listView.clear();
+		}
+		
 		if (elements.size() == 0) { 
 			return;
 		}
@@ -107,6 +118,17 @@ public abstract class Viewer<T extends StoreableObject> extends MyPanel<T> {
 		}
 
 		show(elt);
+	}
+	
+	public void setEnabled(boolean value) { 
+		
+		System.out.println("Viewer setEnables(" + value + ")");
+		
+		super.setEnabled(value);
+		
+		for (Component tmp : formPanel.getComponents()) { 
+			tmp.setEnabled(value);
+		}
 	}
 	
 	protected abstract void show(T elt);

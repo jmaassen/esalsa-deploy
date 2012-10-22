@@ -9,6 +9,8 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 	private final boolean showLogs; 
 	private final boolean showState;
 
+	private final TextLineFieldWithButton popLog;
+	
 	public ExperimentViewer(RootPanel parent, SimpleStub stub, RemoteStore<ExperimentInfo> store, boolean showLogs) { 	
 		super(parent, stub, store, false);
 		
@@ -17,6 +19,7 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 
 		if (showState) { 
 			addField(new TextLineField("State", false));
+			addField(new TextLineField("Last update", false));			
 		}
 		
 		addField(new URIField("URI", false));
@@ -29,49 +32,29 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 			addField(new TextLineField("Current job submission", false));
 		}
 		
-/*		
-		if (colapseDetails) { 
-			CollapsiblePanel tmp = new CollapsiblePanel("Experiment Details");
-			
-			JPanel container = new JPanel();
-			container.setLayout(new BoxLayout(container, BoxLayout.PAGE_AXIS));
-			container.setBorder(new EmptyBorder(5, 5, 5, 5));		
-			container.add(Box.createRigidArea(new Dimension(0, Utils.gapHeight)));						
-			
-			addField(new URIField("Template Directory", false));
-			addField(new URIField("Experiment Directory", false));
-			addField(new URIField("Input Directory", false));
-			addField(new URIField("Output Directory", false));
-		
-			addField(new URIField("POP log file", false));
-		
-			addField(new URIField("Start Script", false));
-			addField(new URIField("Monitor Script", false));
-			addField(new URIField("Stop Script", false));
-		
-			addField(new TextAreaField("Configuration", "Configuration", false, true,  true, -1, 15*Utils.defaultFieldHeight)); 
-		
-			tmp.add(container);
-			formPanel.add(tmp);
-			
-		} else {
-*/
-			addField(new TextLineField("Template Directory", false));
-			addField(new TextLineField("Experiment Directory", false));
-			addField(new TextLineField("Input Directory", false));
-			addField(new TextLineField("Output Directory", false));
-		
-			addField(new TextLineField("Start Script", false));
-			addField(new TextLineField("Monitor Script", false));
-			addField(new TextLineField("Stop Script", false));
-		
-			addField(new TextAreaField("Configuration", "Configuration", false, true,  true, -1, 15*Utils.defaultFieldHeight)); 
-//		}
+		addField(new TextLineField("Template Directory", false));
+		addField(new TextLineField("Experiment Directory", false));
+		addField(new TextLineField("Input Directory", false));
+		addField(new TextLineField("Output Directory", false));
+
+		addField(new TextLineField("Start Script", false));
+		addField(new TextLineField("Monitor Script", false));
+		addField(new TextLineField("Stop Script", false));
+
+		addField(new TextLineFieldWithButton("Configuration", "pop_in",  "show", false, false, null));
+		//addField(new TextAreaField("Configuration", "Configuration", false, true,  true, -1, 15*Utils.defaultFieldHeight)); 
 		
 		if (showLogs) { 
-			addField(new TextAreaField("Log", "Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
-			addField(new TextAreaField("POP Log", "POP Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
+			//addField(new TextAreaField("Log", "Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
+			//addField(new TextAreaField("POP Log", "POP Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
+
+			popLog = new TextLineFieldWithButton("POP Log", "", "show", false, false, null);
+			addField(new TextLineFieldWithButton("Deploy Log", "deploy.log", "show", false, false, null));
+			addField(popLog);
+		} else { 
+			popLog = null;
 		}
+		
 	}
 
 	@Override
@@ -98,12 +81,14 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 		
 		if (showState) { 
 			setElementValue("State", elt.getState());
+			setElementValue("Last update", elt.getLastUpdate());			
 			setElementValue("Current job submission", "" + elt.getCurrentRun());
 		}	
 		
 		if (showLogs) { 
-			setElementValue("Log", elt.getDeployLog());
+			setElementValue("Deploy Log", elt.getDeployLog());
 			setElementValue("POP Log", elt.getLogPOP());
+			popLog.setLine(elt.popLogFile);
 		}
 	}	
 }

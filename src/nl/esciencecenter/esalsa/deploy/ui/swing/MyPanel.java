@@ -1,6 +1,7 @@
 package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,16 +12,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import nl.esciencecenter.esalsa.deploy.StoreableObject;
-import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
-
 @SuppressWarnings("serial")
-public abstract class MyPanel<T extends StoreableObject> extends JPanel implements ActionListener {
+public abstract class MyPanel extends JPanel implements ActionListener {
 
 	private final static int SPACER = 5;
 	
-	protected RemoteStore<T> store;
-	protected final SimpleStub stub;
 	protected final RootPanel parent;
 	
 	protected final JPanel container;
@@ -28,13 +24,11 @@ public abstract class MyPanel<T extends StoreableObject> extends JPanel implemen
 	
 	private final HashMap<String, ButtonHandler> buttonActions = new HashMap<String, ButtonHandler>();
 	
-	protected MyPanel(RootPanel parent, SimpleStub stub, RemoteStore<T> store) { 
+	protected MyPanel(RootPanel parent) { 
 		
 		super(new BorderLayout(SPACER, SPACER));
 		
-		this.store = store;
 		this.parent = parent;
-		this.stub = stub;
 
 		container = new JPanel(new BorderLayout());
 		
@@ -67,7 +61,7 @@ public abstract class MyPanel<T extends StoreableObject> extends JPanel implemen
 	    buttonActions.put(command, handler);
 		buttonPanel.add(button);
 	}
-		
+	
 	public void actionPerformed(ActionEvent e) {		
 		
 		// One of the buttons was clicked!
@@ -105,4 +99,48 @@ public abstract class MyPanel<T extends StoreableObject> extends JPanel implemen
 
 		return (result == 0);
 	}
+
+	public void setEnabled(boolean value) { 
+		
+		System.out.println("MyPanel setEnables(" + value + ")");
+		
+		super.setEnabled(value);
+		
+		for (Component tmp : container.getComponents()) { 
+			tmp.setEnabled(value);
+		}
+		
+		for (Component tmp : buttonPanel.getComponents()) { 
+			tmp.setEnabled(value);
+		}
+	}
+	
+	/*
+	protected void disableMe() { 
+		
+		setEnabled(false);
+	
+		for (Component tmp : container.getComponents()) { 
+			tmp.setEnabled(false);
+		}
+		
+		for (Component tmp : buttonPanel.getComponents()) { 
+			tmp.setEnabled(false);
+		}
+		
+	}
+	
+	protected void enableMe() {
+		
+		setEnabled(true);
+		
+		for (Component tmp : container.getComponents()) { 
+			tmp.setEnabled(true);
+		}
+		
+		for (Component tmp : buttonPanel.getComponents()) { 
+			tmp.setEnabled(true);
+		}
+	}*/
+		
 }

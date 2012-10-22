@@ -14,10 +14,9 @@ import nl.esciencecenter.esalsa.deploy.StoreableObject;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 
 @SuppressWarnings("serial")
-public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implements ListSelectionListener {
+public class StoreListView<T extends StoreableObject> extends MyStorePanel<T> implements ListSelectionListener {
 	
 	protected JList list;
-//	private DefaultListModel listModel;
 	
 	private Viewer<T> viewer;
 	
@@ -91,9 +90,6 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 
 		this.viewer = viewer;
 		
-		//listModel = new DefaultListModel();
-		//list = new JList(listModel);
-		
 		list = new JList(new StoreListModel(store));
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	    list.setSelectedIndex(0);
@@ -102,8 +98,6 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 	    list.clearSelection();
 	    
 	    container.add(list, BorderLayout.NORTH);
-		
-	    //store.addCallBack(this);
 		
 		addButton("Refresh", new RefreshHandler());
 		
@@ -173,5 +167,10 @@ public class StoreListView<T extends StoreableObject>  extends MyPanel<T> implem
 				list.clearSelection();
 			}
 		}
+	}
+
+
+	public void clear() {
+		list.clearSelection();
 	}
 }

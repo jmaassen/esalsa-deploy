@@ -104,6 +104,9 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 	/** The current JOB ID generated pop_in configuration file. */
 	private String jobID;
 	
+	/** A time stamp for the last update. */
+	private String lastTimeStamp;;
+	
 	public ExperimentInfo(String ID, String experimentDescriptionID, int totalRestarts, 
 			WorkerDescription worker, FileSet inputs, ConfigurationTemplate template) throws Exception {
 	
@@ -166,6 +169,7 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 
 		this.state = "INITIAL";
 		this.logDeploy = "";
+		this.lastTimeStamp = getTimeStamp();		
 	}
 
 	private void addWorkerProperties(HashMap<String, String> dest, HashMap<String, String> source) { 
@@ -211,7 +215,7 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		StringBuilder b = new StringBuilder();
 		b.append(c.get(Calendar.YEAR));
 		b.append("-");
-		b.append(format(c.get(Calendar.MONTH), 2));
+		b.append(format(c.get(Calendar.MONTH)+1, 2));
 		b.append("-");
 		b.append(format(c.get(Calendar.DAY_OF_MONTH), 2));
 		b.append(" ");
@@ -224,19 +228,23 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		
 	}
 	
-	public void info(String message) { 
-		logDeploy = logDeploy.concat(getTimeStamp() + " " + message + "\n");
+	public void info(String message) {
+		lastTimeStamp = getTimeStamp();
+		logDeploy = logDeploy.concat(lastTimeStamp + " " + message + "\n");
 	}
 	
-	public void warn(String message, Throwable e) { 
-		logDeploy = logDeploy.concat(getTimeStamp() +" WARNING: " + message + "\n");
+	public void warn(String message, Throwable e) {
+		lastTimeStamp = getTimeStamp();
+		logDeploy = logDeploy.concat(lastTimeStamp + " WARNING: " + message + "\n");
 	}
 
-	public void error(String message, Throwable e) { 
-		logDeploy = logDeploy.concat(getTimeStamp() +" ERROR: " + message + "\n");
+	public void error(String message, Throwable e) {
+		lastTimeStamp = getTimeStamp();
+		logDeploy = logDeploy.concat(lastTimeStamp +" ERROR: " + message + "\n");
 	}
 	
 	public void setLogPOP(String log) {
+		lastTimeStamp = getTimeStamp();
 		logPOPcurrent = "\n------ LOG OF RUN " + currentRun + "------ \n" + log;
 	}
 	
@@ -256,6 +264,7 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 	}
 	
 	public void setJobID(String jobID) {
+		lastTimeStamp = getTimeStamp();
 		this.jobID = jobID;
 	}
 	
@@ -267,21 +276,18 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		return state;
 	}
 	
-	public void setState(String state) { 
+	public void setState(String state) {
+		lastTimeStamp = getTimeStamp();
 		this.state = state;
 	}	
-	
-	@Override
-	public String toString() {
-		return "Experiment: " + experimentDescriptionID + ", state =" + state + ", log:\n"
-				+ logDeploy + "\n\n";
-	}
 
+	/*	
 	public URI getPOPLogURI() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	 */
+	
 	public int getCurrentRun() {
 		return currentRun;
 	}
@@ -290,5 +296,13 @@ public class ExperimentInfo extends StoreableObject implements Serializable {
 		return logDeploy;
 	}
 
-
+	public String getLastUpdate() {
+		return lastTimeStamp;
+	}
+	
+	@Override
+	public String toString() {
+		return "Experiment: " + experimentDescriptionID + ", state =" + state + ", log:\n"
+				+ logDeploy + "\n\n";
+	}
 }
