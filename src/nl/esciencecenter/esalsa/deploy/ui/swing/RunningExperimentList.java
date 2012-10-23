@@ -20,7 +20,7 @@ public class RunningExperimentList extends StoreListView<ExperimentInfo> {
 	
 	private void stop() { 
 		
-		System.out.println("Got Stop");
+		//System.out.println("Got Stop");
 		
 		String ID = (String)  list.getSelectedValue();
 

@@ -149,7 +149,7 @@ public class PropertyField extends BorderedEditorField {
 	
 	private void addProperty(String key, String value) { 
 
-		System.out.println("Adding property field! (" + key + " = " + value + ")");
+		//System.out.println("Adding property field! (" + key + " = " + value + ")");
 		
 		Property field = new Property(key, value);
 		properties.add(field);

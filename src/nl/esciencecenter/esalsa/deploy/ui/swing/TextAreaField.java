@@ -121,7 +121,7 @@ public class TextAreaField extends BorderedEditorField implements DocumentListen
     		int start = textArea.getLineStartOffset(line-1);
     		int end = textArea.getLineEndOffset(line-1);
     		
-    		System.out.println("Highlight " + start + " " + end);
+    		//System.out.println("Highlight " + start + " " + end);
     		
 			highlighter.addHighlight(start, end, new MyHighlighter(ERROR_COLOR));
 		} catch (BadLocationException e) {
@@ -182,13 +182,14 @@ public class TextAreaField extends BorderedEditorField implements DocumentListen
 	
 	public void setEnabled(boolean value) { 
 		
-		System.out.println("TextAreaField setEnables(" + value + ")");
+		//System.out.println("TextAreaField setEnables(" + value + ")");
 		
 		super.setEnabled(value);
 
 		if (lines != null) { 
 			lines.setEnabled(value);
 		} 
+		
 		textArea.setEnabled(value);
 	}
 

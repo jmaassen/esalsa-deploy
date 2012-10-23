@@ -2,9 +2,15 @@ package nl.esciencecenter.esalsa.deploy.ui.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JFrame;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import nl.esciencecenter.esalsa.deploy.ConfigurationTemplate;
 import nl.esciencecenter.esalsa.deploy.ExperimentInfo;
@@ -12,42 +18,134 @@ import nl.esciencecenter.esalsa.deploy.ExperimentTemplate;
 import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
+import nl.esciencecenter.esalsa.deploy.server.Util;
 
 public class RootPanel extends JPanel {
+
+	private static final Logger globalLogger = LoggerFactory.getLogger("eSalsa");
+
+	private static int DEFAULT_TIMEOUT = 30000;
 
 	private static final long serialVersionUID = 2685960743908025422L;
 
 	private final JTabbedPane tabs;
 
-	private final RemoteStore<ExperimentTemplate> experimentStore;
-	private final StorePanel<ExperimentTemplate> experimentPanel;
+	private String server;
+	private int port;
 
-	private final RemoteStore<WorkerDescription> workerStore;
-	private final StorePanel<WorkerDescription> workerPanel;
+	private RemoteStore<ExperimentTemplate> experimentStore;
+	private StorePanel<ExperimentTemplate> experimentPanel;
 
-	private final RemoteStore<FileSet> inputStore;	
-	private final StorePanel<FileSet> inputPanel;
+	private RemoteStore<WorkerDescription> workerStore;
+	private StorePanel<WorkerDescription> workerPanel;
 
-	private final RemoteStore<ConfigurationTemplate> configurationStore;
-	private final StorePanel<ConfigurationTemplate> configurationPanel;
+	private RemoteStore<FileSet> inputStore;	
+	private StorePanel<FileSet> inputPanel;
 
-	private final RemoteStore<ExperimentInfo> preparedStore;
-	private final StorePanel<ExperimentInfo> preparedPanel;
+	private RemoteStore<ConfigurationTemplate> configurationStore;
+	private StorePanel<ConfigurationTemplate> configurationPanel;
 
-	private final RemoteStore<ExperimentInfo> runningStore;
-	private final StorePanel<ExperimentInfo> runningPanel;
+	private RemoteStore<ExperimentInfo> preparedStore;
+	private StorePanel<ExperimentInfo> preparedPanel;
 
-	private final RemoteStore<ExperimentInfo> completedStore;
-	private final StorePanel<ExperimentInfo> completedPanel;
+	private RemoteStore<ExperimentInfo> runningStore;
+	private StorePanel<ExperimentInfo> runningPanel;
+
+	private RemoteStore<ExperimentInfo> completedStore;
+	private StorePanel<ExperimentInfo> completedPanel;
+
+	private SimpleStub stub;
+
+	private GUI parent;
+	private JFrame loginFrame;
 	
-	private final SimpleStub stub;
-	
-	public RootPanel(SimpleStub stub) throws Exception {
+	public RootPanel(GUI parent, String server, int port) throws Exception {
 
-		this.stub = stub;
-		
+		this.parent = parent;
+		this.server = server;
+		this.port = port;
+
 		setLayout(new BorderLayout());
-		tabs = new JTabbedPane();
+		tabs = new JTabbedPane();		
+		showLogin();
+	} 
+	
+	protected void showErrorMessage(String message, Exception e) {
+		JOptionPane.showMessageDialog(this, message + "\n(" + e.getLocalizedMessage() + ")");
+	}
+	
+	protected boolean askConfirmation(String message) { 		
+		
+		String [] options = new String [] { "OK", "Cancel" };
+		String selected = "Cancel";
+		
+		int result = JOptionPane.showOptionDialog(this, message, "WARNING", JOptionPane.OK_CANCEL_OPTION, 
+				JOptionPane.WARNING_MESSAGE, null, options, selected);
+
+		return (result == 0);
+	}
+	
+	private void showLogin() { 
+
+		LoginPanel login = new LoginPanel(this, server, port);
+
+		loginFrame = new JFrame();
+		//make sure the program exits when the frame closes
+		loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		loginFrame.setTitle("Login to server");
+		//loginFrame.setSize(500,300);
+
+		//This will center the JFrame in the middle of the screen
+
+		loginFrame.getContentPane().setLayout(new BorderLayout());
+		loginFrame.getContentPane().add(login, BorderLayout.CENTER);
+		
+		loginFrame.setPreferredSize(new Dimension(300,230));
+
+		
+		// Display the window.
+		loginFrame.pack();
+		
+		loginFrame.setLocationRelativeTo(null);
+		loginFrame.setVisible(true);
+		loginFrame.setAlwaysOnTop(true);		
+	}	
+
+	protected void login(String server, int port, String password) { 
+
+		this.server = server;
+		this.port = port;
+
+		try {
+			stub = Util.connect(server, port, DEFAULT_TIMEOUT, password, null);
+		} catch (Exception e) {
+			showErrorMessage("Failed to connect to server: " + server + ":" + port, e);
+			return;
+		} 
+		
+		loginFrame.setVisible(false);
+		loginFrame.dispose();
+		
+		try { 
+			init();
+		} catch (Exception e) {
+			showErrorMessage("INTERNAL ERROR: Failed to initialize GUI!", e);
+			System.exit(1);
+		}
+	}
+	
+	protected void cancelLogin() { 
+		
+		boolean confirm = askConfirmation("Are you sure you want to exit?");
+		
+		if (confirm) { 
+			System.exit(1);
+		} 
+	} 
+		
+	private void init() throws Exception {
+
+		//System.out.println("In Init!");
 		
 		workerStore = new RemoteStore<WorkerDescription>(stub, SimpleStub.getKey("worker"));
 		Editor<WorkerDescription> workerEditor = new WorkerEditor(this, stub, workerStore);
@@ -78,7 +176,7 @@ public class RootPanel extends JPanel {
 		WaitingExperimentList waitingList = new WaitingExperimentList(this, stub, preparedStore, waitingViewer);
 		waitingViewer.setViewer(waitingList);
 		preparedPanel = new StorePanel<ExperimentInfo>(waitingList, waitingViewer);
-		
+
 		runningStore = new RemoteStore<ExperimentInfo>(stub, SimpleStub.getKey("running"));
 		ExperimentViewer runningViewer = new ExperimentViewer(this, stub,  runningStore, true);
 		RunningExperimentList runningList = new RunningExperimentList(this, stub, runningStore, runningViewer);
@@ -90,7 +188,7 @@ public class RootPanel extends JPanel {
 		StoreListView<ExperimentInfo> completedList = new StoreListView<ExperimentInfo>(this, stub, completedStore, completedViewer, true);
 		completedViewer.setViewer(completedList);
 		completedPanel = new StorePanel<ExperimentInfo>(completedList, completedViewer);
-				
+
 		tabs.addTab("Workers", Utils.createImageIcon(
 				"images/computer.png", "Workers Tab"),
 				workerPanel);
@@ -110,7 +208,7 @@ public class RootPanel extends JPanel {
 		tabs.addTab("Prepared", Utils.createImageIcon(
 				"images/control-pause.png", "Prepared Tab"),
 				preparedPanel);
-		
+
 		tabs.addTab("Running", Utils.createImageIcon(
 				"images/control.png", "Running Tab"),
 				runningPanel);
@@ -120,16 +218,19 @@ public class RootPanel extends JPanel {
 				completedPanel);
 
 		add(tabs, BorderLayout.CENTER);
+		
+		parent.ready();
 	}
-	
+
+	protected void close() { 
+		stub.close();
+	}
+
 	public void setEnabled(boolean value) { 
-		
-		System.out.println("RootPanel setEnables(" + value + ")");
-		
 		super.setEnabled(value);
-		
+
 		tabs.setEnabled(value);
-		
+
 		experimentPanel.setEnabled(value);
 		workerPanel.setEnabled(value);
 		inputPanel.setEnabled(value);
@@ -139,40 +240,16 @@ public class RootPanel extends JPanel {
 		completedPanel.setEnabled(value);
 	}
 
-	
-	
 	protected void disableMe() { 	
 		setEnabled(false);
 	}
-		
-		/*
-		setEnabled(false);
-		
-		experimentPanel.disableMe();
-		workerPanel.disableMe();
-		inputPanel.disableMe();
-		configurationPanel.disableMe();
-		preparedPanel.disableMe();
-		runningPanel.disableMe();
-		completedPanel.disableMe();	
-	}*/
 	
 	protected void enableMe() {
 		setEnabled(true);
 	}
 	
-	/*
-		experimentPanel.enableMe();
-		workerPanel.enableMe();
-		inputPanel.enableMe();
-		configurationPanel.enableMe();
-		preparedPanel.enableMe();
-		runningPanel.enableMe();
-		completedPanel.enableMe();
-	}*/
-	
 	protected void refresh(String who) { 
-		
+
 		try { 
 			if (who.equals("worker")) { 
 				workerStore.refresh();
@@ -198,9 +275,7 @@ public class RootPanel extends JPanel {
 				completedStore.refresh();
 			}
 		} catch (Exception e) { 
-			System.err.println("Failed to refresh " + who + " store");
-			System.err.println(e.getLocalizedMessage());
-			e.printStackTrace(System.err);
+			globalLogger.error("Failed to refresh " + who + " store", e);
 		}
 	}
 }

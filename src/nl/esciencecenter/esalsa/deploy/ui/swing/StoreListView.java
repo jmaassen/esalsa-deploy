@@ -114,7 +114,7 @@ public class StoreListView<T extends StoreableObject> extends MyStorePanel<T> im
 	    	
 	    	String value = (String) list.getSelectedValue();
 	    	
-	    	System.out.println("Got valueChanged " + value);
+	    	//System.out.println("Got valueChanged " + value);
 	    	
 	    	if (value != null) { 
 	    		viewer.show(value);
@@ -126,7 +126,7 @@ public class StoreListView<T extends StoreableObject> extends MyStorePanel<T> im
 
 		String id = (String) list.getSelectedValue();
 
-		System.out.println("Got Delete " + id);
+		//System.out.println("Got Delete " + id);
 		
 		if (id == null) { 
 			return;
@@ -136,7 +136,7 @@ public class StoreListView<T extends StoreableObject> extends MyStorePanel<T> im
 		
 		if (confirm) { 
 	
-			System.out.println("Deleting " + id);
+			//System.out.println("Deleting " + id);
 			
 			try {
 				store.delete(id);
@@ -154,7 +154,7 @@ public class StoreListView<T extends StoreableObject> extends MyStorePanel<T> im
 		
 		String value = (String) list.getSelectedValue();
 	    
-		System.out.println("Got refresh " + value);
+		//System.out.println("Got refresh " + value);
 		
 		parent.refresh("all");
 		

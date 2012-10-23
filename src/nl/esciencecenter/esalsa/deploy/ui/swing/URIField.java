@@ -24,7 +24,7 @@ public class URIField extends TextLineField {
 		try {
 			uri = new URI(tmp);
 		} catch (URISyntaxException e) {
-			System.err.println("Invalid URI: " + tmp);
+			GUI.globalLogger.error("URIField.getValue: Field contains invalid URI: " + tmp);
 		}
 		
         return uri;
@@ -39,12 +39,12 @@ public class URIField extends TextLineField {
 			return;
 		}
 
-		System.out.println("Setting URI field " + value);
+		//System.out.println("Setting URI field " + value);
 		
     	if (value instanceof URI) { 
     		textField.setText(((URI) value).toString());
     	} else { 
-    		System.err.println("URIField.setValue cannot handle paramater of type " + value.getClass());
+    		GUI.globalLogger.error("URIField.setValue cannot handle paramater of type " + value.getClass());
     	}
     }
 	

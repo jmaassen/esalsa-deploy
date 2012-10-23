@@ -1,6 +1,8 @@
 package nl.esciencecenter.esalsa.deploy.server;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
@@ -15,8 +17,12 @@ public class Stub implements POPRunnerInterface, Protocol {
 
 	private final SimpleStub stub;
 	
-	public Stub(Socket socket) throws IOException {
-		stub = new SimpleStub(socket);
+	public Stub(Socket socket, InputStream in, OutputStream out) throws IOException {
+		stub = new SimpleStub(socket, in, out);
+	}
+	
+	public Stub(SimpleStub s) {
+		stub = s;
 	}
 	
 	public void close() { 

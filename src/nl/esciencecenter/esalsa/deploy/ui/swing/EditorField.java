@@ -18,7 +18,7 @@ public abstract class EditorField extends JPanel implements MouseListener {
 	
 	protected boolean error = false;
 	
-	public EditorField (String key, boolean mayBeEmpty) {
+	public EditorField(String key, boolean mayBeEmpty) {
 		super(new BorderLayout());
 		this.key = key;
 		this.mayBeEmpty = mayBeEmpty;
@@ -26,8 +26,7 @@ public abstract class EditorField extends JPanel implements MouseListener {
     
 	public void mouseClicked(MouseEvent e) {
     	resetError();
-    	System.out.println("Mouse clicked! BBBBB");
-	}
+ 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {

@@ -14,9 +14,14 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @SuppressWarnings("serial")
 public class FileListField extends BorderedEditorField {
-
+	
+	private static Logger globalLogger = LoggerFactory.getLogger("eSalsa");
+	
 	private class FileField implements MouseListener {
 
 		final JTextField fileField = new JTextField();
@@ -147,7 +152,7 @@ public class FileListField extends BorderedEditorField {
 
 	private void addFile(String text) {
 
-		System.out.println("Adding file field! (" + text + ")");
+		//System.out.println("Adding file field! (" + text + ")");
 
 		FileField field = new FileField(text);
 		list.add(field);
@@ -172,8 +177,7 @@ public class FileListField extends BorderedEditorField {
 				uri = new URI(value);
 			} catch (URISyntaxException e) {
 				f.setErrorBackGround();
-				System.err.println("Invalid URI!");
-				e.printStackTrace(System.err);
+				globalLogger.debug("Invalid URI!", e);
 				return null;
 			}
 			
@@ -191,7 +195,7 @@ public class FileListField extends BorderedEditorField {
 	@Override
 	public void setValue(Object value) {
 
-		System.out.println("FileListField.setValue " + value);
+		// System.out.println("FileListField.setValue " + value);
 
 		filesPanel.removeAll();
 		list.clear();
@@ -202,7 +206,7 @@ public class FileListField extends BorderedEditorField {
 
 		if (value instanceof LinkedList) {
 
-			System.out.println("Is linkedList!");
+			//System.out.println("Is linkedList!");
 
 			// EEP
 			LinkedList<URI> tmp = (LinkedList<URI>) value;
@@ -232,7 +236,7 @@ public class FileListField extends BorderedEditorField {
 	@Override
 	public boolean checkCorrectness() {
 
-		System.out.println("In Files.iscorrect!");
+		//System.out.println("In Files.iscorrect!");
 		
 		boolean correct = true;
 		
@@ -254,7 +258,7 @@ public class FileListField extends BorderedEditorField {
 			setError("Invalid URIs found!");
 		}
 		
-		System.out.println("In Files.iscorrect result = " + correct);
+		//System.out.println("In Files.iscorrect result = " + correct);
 		return correct;
 	}
 

@@ -3,13 +3,20 @@ package nl.esciencecenter.esalsa.deploy.server;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SimpleStub implements Protocol {
 
+	private static Logger globalLogger = LoggerFactory.getLogger("eSalsa");
+	
 	private final Socket socket;
 	private final ObjectInputStream in;
 	private final ObjectOutputStream out;
@@ -36,21 +43,27 @@ public class SimpleStub implements Protocol {
 	}
 	
 	
-	public SimpleStub(Socket socket) throws IOException { 
+	public SimpleStub(Socket socket, InputStream in, OutputStream out) throws IOException { 
 		this.socket = socket;
-		in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-		out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-		out.flush();
+		this.in = new ObjectInputStream(new BufferedInputStream(in));
+		this.out = new ObjectOutputStream(new BufferedOutputStream(out));
+		this.out.flush();
 	}
 	
 	public void close() { 
 		
+		globalLogger.debug("Closing connection to " + socket.getRemoteSocketAddress());
+		
 		try { 
+			out.writeByte(EXIT);
+			out.writeByte(0);
+			out.writeObject(null);
+			out.flush();
 			out.close();
 		} catch (Exception e) {
 			// ignored
 		}
-
+		
 		try { 
 			in.close();
 		} catch (Exception e) {
@@ -65,8 +78,8 @@ public class SimpleStub implements Protocol {
 	}
 	
 	private Object rpc(int opcode, int type, Object data) throws Exception { 
-	
-		System.err.println("Sending RPC " + opcode + " " + type + " " + data);
+		
+		globalLogger.debug("Sending RPC " + opcode + " " + type + " " + data);
 		
 		out.writeByte(opcode);
 		out.writeByte(type);
@@ -76,7 +89,7 @@ public class SimpleStub implements Protocol {
 		int status = in.readInt();
 		Object result = in.readObject();
 		
-		System.err.println("Received reply " + status + " " + result);
+		globalLogger.debug("Received reply " + status + " " + result);
 		
 		if (status == 0) { 
 			return result;

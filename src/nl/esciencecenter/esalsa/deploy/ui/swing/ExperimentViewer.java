@@ -42,12 +42,8 @@ public class ExperimentViewer extends Viewer<ExperimentInfo> {
 		addField(new TextLineField("Stop Script", false));
 
 		addField(new TextLineFieldWithButton("Configuration", "pop_in",  "show", false, false, null));
-		//addField(new TextAreaField("Configuration", "Configuration", false, true,  true, -1, 15*Utils.defaultFieldHeight)); 
 		
 		if (showLogs) { 
-			//addField(new TextAreaField("Log", "Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
-			//addField(new TextAreaField("POP Log", "POP Log", true, false, true, -1, 15*Utils.defaultFieldHeight));
-
 			popLog = new TextLineFieldWithButton("POP Log", "", "show", false, false, null);
 			addField(new TextLineFieldWithButton("Deploy Log", "deploy.log", "show", false, false, null));
 			addField(popLog);

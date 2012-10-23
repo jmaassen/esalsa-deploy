@@ -3,8 +3,6 @@ package nl.esciencecenter.esalsa.deploy.ui.swing;
 import java.net.URI;
 import java.util.HashMap;
 
-import javax.swing.JOptionPane;
-
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
 import nl.esciencecenter.esalsa.deploy.server.SimpleStub;
 

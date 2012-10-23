@@ -20,7 +20,7 @@ public class ExperimentTemplateList extends StoreListView<ExperimentTemplate> {
 		
 	private void create() { 
 	
-		System.out.println("Got Create");
+		//System.out.println("Got Create");
 		
 		String ID = (String) list.getSelectedValue();
 

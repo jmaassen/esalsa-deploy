@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -43,6 +45,20 @@ public class TextLineFieldWithButton extends TextLineField implements ActionList
     	
     	frame.getContentPane().add(panel, BorderLayout.CENTER);
         frame.setPreferredSize(new Dimension(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT));
+        
+        if (!editable) { 
+        	frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        } else { 
+        	frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        	
+        	frame.addWindowListener(new WindowAdapter() {
+        		@Override
+        		public void windowClosing(WindowEvent we) {
+        			cancel();
+        		}
+        	});
+        }
+        	
         frame.pack();
 
         // center on screen

@@ -76,7 +76,7 @@ public class TextLineField extends BorderedEditorField {
 
 	public void setEnabled(boolean value) { 
 		
-		System.out.println("TextLineField setEnables(" + value + ")");
+		//System.out.println("TextLineField setEnables(" + value + ")");
 		
 		super.setEnabled(value);
 		textField.setEnabled(value);

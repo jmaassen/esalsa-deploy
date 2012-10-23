@@ -23,7 +23,6 @@ public class RemoteStore<T extends StoreableObject> {
 		List<String> keys = stub.list(stubKey);
 		
 		for (String s : keys) {
-			System.err.println("PUT " + s);
 			map.put(s, null);
 		}
 	}
@@ -110,7 +109,6 @@ public class RemoteStore<T extends StoreableObject> {
 		List<String> keys = stub.list(stubKey);
 		
 		for (String s : keys) {
-			System.err.println("PUT " + s);
 			map.put(s, null);
 			
 			if (callback != null) { 

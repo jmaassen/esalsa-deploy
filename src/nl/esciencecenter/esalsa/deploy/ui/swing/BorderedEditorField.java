@@ -33,14 +33,8 @@ public abstract class BorderedEditorField extends EditorField {
     	setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(ERROR_COLOR), tmp));
     }
 
-    public void resetError() { 
-        
-    	System.out.println("Reset error AAP!");
-    	
+    public void resetError() {         
     	error = false;
-    	setBorder(normalBorder);
-    	
-    	System.out.println("Reset error!");
-    	
+    	setBorder(normalBorder);    	
     }
 }

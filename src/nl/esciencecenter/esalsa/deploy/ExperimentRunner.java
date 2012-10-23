@@ -408,14 +408,14 @@ public class ExperimentRunner {
 
 		try { 
 			error = Utils.readOutput(stderr, null);
-			info("stderr: " + error.toString());
+			info("stderr: " + error.toString().trim());
 		} catch (IOException e) {
 			warn("Failed to read stderr of experiment  " + info.ID, e);
 		}
 		
 		try { 
 			output = Utils.readOutput(stdout, null);
-			info("stdout: " + output.toString());
+			info("stdout: " + output.toString().trim());
 		} catch (IOException e) {
 			error("Failed to read stdout of experiment  "+ info.ID, e);
 			return;
@@ -488,14 +488,14 @@ public class ExperimentRunner {
 
 		try { 
 			error = Utils.readOutput(stderr, null);
-			info("stderr: " + error.toString());
+			info("stderr: " + error.toString().trim());
 		} catch (IOException e) {
 			warn("Failed to read stderr of experiment  " + info.ID, e);
 		}
 		
 		try { 
 			output = Utils.readOutput(stdout, null);
-			info("stdout: " + output.toString());
+			info("stdout: " + output.toString().trim());
 		} catch (IOException e) {
 			error("Failed to read stdout of experiment  "+ info.ID, e);
 			return;
@@ -552,14 +552,14 @@ public class ExperimentRunner {
 
 		try { 
 			error = Utils.readOutput(stderr, null);
-			info("stderr: " + error.toString());
+			info("stderr: " + error.toString().trim());
 		} catch (IOException e) {
 			warn("Failed to read stderr of monitor script of experiment  "+ info.ID, e);
 		}
 		
 		try { 
 			output = Utils.readOutput(stdout, null);
-			info("stdout: " + output.toString());
+			info("stdout: " + output.toString().trim());
 		} catch (IOException e) {
 			error("Failed to read stdout of monitor script of experiment  "+ info.ID, e);
 			return;

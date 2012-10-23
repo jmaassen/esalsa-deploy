@@ -19,8 +19,6 @@ public class Utils {
         return result;
     }
 
-
-
     /**
      * Returns an JButton, or null if the path was invalid.
      * 

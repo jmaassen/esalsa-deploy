@@ -30,7 +30,7 @@ public class StorePanel<T extends StoreableObject> extends JPanel {
     
     public void setEnabled(boolean value) { 
 
-    	System.out.println("StorePanel setEnables(" + value + ")");
+    	//System.out.println("StorePanel setEnables(" + value + ")");
 
     	super.setEnabled(value);
     	
@@ -41,21 +41,4 @@ public class StorePanel<T extends StoreableObject> extends JPanel {
     	list.setEnabled(value);
     	viewer.setEnabled(value);
     }
-
-    /*
-    protected void disableMe() { 
-    	
-    	
-    	list.disableMe();
-    	viewer.disableMe();
-    }
-    
-    protected void enableMe() {
-    	
-    	super.setEnabled(true);
-    	
-    	list.enableMe();
-		viewer.enableMe();
-    }*/
-    
 }

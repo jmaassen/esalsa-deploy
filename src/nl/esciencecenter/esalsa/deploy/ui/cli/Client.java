@@ -16,6 +16,7 @@ import nl.esciencecenter.esalsa.deploy.FileSet;
 import nl.esciencecenter.esalsa.deploy.WorkerDescription;
 import nl.esciencecenter.esalsa.deploy.parser.DescriptionParser;
 import nl.esciencecenter.esalsa.deploy.server.Stub;
+import nl.esciencecenter.esalsa.deploy.server.Util;
 
 public class Client {
 	
@@ -59,12 +60,7 @@ public class Client {
 		this.server = serverAddress;
 		
 		try { 
-			socket = new Socket(serverAddress, port);
-			
-			socket.setSoTimeout(DEFAULT_TIMEOUT);
-			socket.setTcpNoDelay(true);
-			stub = new Stub(socket);
-		
+			stub = new Stub(Util.connect(serverAddress, port, DEFAULT_TIMEOUT));
 		} catch (Exception e) {
 			System.err.println("Failed to connect to server: " + serverAddress + ":" + port + " " + e);
 			e.printStackTrace(System.err);

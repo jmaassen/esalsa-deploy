@@ -1,13 +1,7 @@
 package nl.esciencecenter.esalsa.deploy.server;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
 
 import nl.esciencecenter.esalsa.deploy.POPRunner;
 import nl.esciencecenter.esalsa.deploy.POPRunnerInterface;
@@ -26,6 +20,10 @@ public class Server {
 	private final int port;
 	private final int timeout;
 	
+	private final String initVector;	
+	private final String key; 
+//	private final String cert; 
+	
 	private final POPRunnerInterface runner;
 	
 	private final ServerSocket ss;
@@ -38,20 +36,26 @@ public class Server {
 		String bindAddr = p.getProperty("poprunner.server.address", null); 
 		timeout = p.getIntProperty("poprunner.server.timeout", DEFAULT_TIMEOUT);
 		
-		globalLogger.info("Socket for incoming connections: " + (bindAddr == null ? "localhost" : bindAddr) + ":" + port);
-		globalLogger.info("Timeout set to " + timeout);
+		key = p.getProperty("poprunner.server.crypto.key", null);
+	//	cert = p.getProperty("poprunner.server.crypto.cert", null);
+		initVector = Util.resize(p.getProperty("poprunner.server.crypto.iv"));
 		
+		if (key == null) { 
+			globalLogger.error("No security credentials provided!");
+			System.exit(1);
+		}
+		
+		if (bindAddr == null || bindAddr.length() == 0) { 
+			bindAddr = "localhost";
+		}
+		
+		globalLogger.info("Socket for incoming connections: " + bindAddr + ":" + port);
+		globalLogger.info("Timeout set to " + timeout);
+
 		try { 
-			if (bindAddr == null) {
-				bindAddr = "localhost";
-			}
-				
-			ss = new ServerSocket();
-			ss.bind(new InetSocketAddress(bindAddr, port));
-			ss.setSoTimeout(DEFAULT_TIMEOUT);
-			
+			ss = Util.createServer(bindAddr, port);
 		} catch (Exception e) {
-			globalLogger.error("Socket creation failed!", e);
+			globalLogger.error("ServerSocket creation failed!", e);
 			throw e;
 		}
 		
@@ -59,60 +63,16 @@ public class Server {
 		
 	}
 	
-	
-	private void close(Socket s, InputStream in, OutputStream out) { 
-		
-		if (out != null) { 
-			try { 
-				out.close();
-			} catch (Exception e) {
-				// ignored
-			}
-		} 
-		
-		if (in != null) { 
-			try { 
-				in.close();
-			} catch (Exception e) {
-				// ignored
-			}
-		} 
-		
-		if (s != null) { 
-			try { 
-				s.close();
-			} catch (Exception e) {
-				// ignored
-			}
-		}
-	}
-	
-	
 	public void run() { 
 		
-		while (true) { 
+		globalLogger.info("Waiting for incoming connections...");
 
-			Socket s = null;
-			
+		while (true) { 
 			try {
-				globalLogger.info("Waiting for incoming connection...");
-				s = ss.accept();
-			} catch (SocketTimeoutException e) {
-				// allowed
-			} catch (IOException e) {
+				Util.accept(ss, DEFAULT_TIMEOUT, runner, key, initVector);
+			} catch (Exception e) {
 				globalLogger.error("Failed to accept incoming connection!", e);
 				return;
-			}
-			
-			if (s != null) { 
-				globalLogger.info("Incoming connection from " + s.getInetAddress());
-
-				try {
-					new Proxy(s, runner);
-				} catch (Exception e) {
-					globalLogger.warn("Failed to create connection!", e);
-					close(s, null, null);
-				}
 			}
 		}
 	}

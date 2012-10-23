@@ -3,8 +3,10 @@ package nl.esciencecenter.esalsa.deploy.server;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 import org.slf4j.Logger;
@@ -28,14 +30,14 @@ public class Proxy implements Runnable, Protocol {
 	
 	private final Thread myThread;
 	
-	public Proxy(Socket socket, POPRunnerInterface runner) throws IOException { 
+	public Proxy(Socket socket, InputStream in, OutputStream out, POPRunnerInterface runner) throws IOException { 
 		this.socket = socket;
 		this.runner = runner;
 		
-		out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-		out.flush();
+		this.out = new ObjectOutputStream(new BufferedOutputStream(out));
+		this.out.flush();
 		
-		in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+		this.in = new ObjectInputStream(new BufferedInputStream(in));
 		
 		myThread = new Thread(this, "POPRunner proxy");
 		myThread.start();
@@ -175,6 +177,48 @@ public class Proxy implements Runnable, Protocol {
 		}
 	}
 	
+	private String opcodeToString(int opcode) { 
+		switch (opcode) { 
+		case ADD:
+			return "add";
+		case GET:
+			return "get";
+		case REMOVE:
+			return "remove";
+		case LIST:
+			return "list";					
+		case CREATE:
+			return "create";
+		case START:
+			return "start";
+		case STOP:
+			return "stop";
+		default: 
+			return "unknown";
+		}
+	}
+	
+	private String typeToString(int type) { 
+		switch (type) { 
+		case WORKER:
+			return "worker";
+		case INPUTS:
+			return "input";
+		case CONFIG:
+			return "config";
+		case EXPERIMENT:
+			return "experiment";
+		case WAITING:
+			return "waiting";
+		case COMPLETED:
+			return "completed";
+		case RUNNING:
+			return "running";
+		default: 
+			return "unknown";
+		}	
+	}
+	
 	@Override
 	public void run() {
 
@@ -197,12 +241,13 @@ public class Proxy implements Runnable, Protocol {
 
 			if (!done && opcode >= 0) { 
 
-				System.err.println("GOT RPC " + opcode + " " + type + " " + param);
+				globalLogger.info("Received RPC(" + opcodeToString(opcode) + ", " + typeToString(type) + ", ...) from " + socket.getRemoteSocketAddress());
 				
 				int status = -1;
 				Object result = null;
 				
-				if (opcode == EXIT) { 
+				if (opcode == EXIT) { 					
+					globalLogger.info("Connection to " + socket.getRemoteSocketAddress() + " closed.");					
 					done = true;
 					status = 0;
 				} else { 
@@ -213,15 +258,15 @@ public class Proxy implements Runnable, Protocol {
 						result = e;
 						status = 1;
 					} 
-				}
-
-				try { 
-					out.writeInt(status);
-					out.writeObject(result);
-					out.flush();
-				} catch (Exception e) {
-					done = true;
-					System.out.println("WARNING: Lost connection to " + socket.getRemoteSocketAddress());					
+					
+					try { 
+						out.writeInt(status);
+						out.writeObject(result);
+						out.flush();
+					} catch (Exception e) {
+						done = true;
+						globalLogger.warn("Lost connection to " + socket.getRemoteSocketAddress());					
+					}
 				}
 			} 
 		}
